@@ -2,10 +2,12 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
+  compareVersions,
   formatBytes,
   formatDate,
   isVersionTag,
   latestRelease,
+  latestVersion,
   liveDownload,
   primaryAsset,
   ratioPercent,
@@ -199,6 +201,32 @@ test('upstream pull requests in the snapshot are all merged elsewhere', () => {
   const pulls = upstreamPulls(snapshot.pulls, OWNER);
   assert.ok(pulls.length >= 5);
   assert.ok(pulls.every((p) => p.mergedAt && !p.repo.toLowerCase().startsWith('puretechteam/')));
+});
+
+// ---- versions come from releases and from tags
+
+test('compareVersions orders by number, not by text', () => {
+  assert.ok(compareVersions('0.10.0', '0.9.0') > 0);
+  assert.ok(compareVersions('1.2', '1.2.1') < 0);
+  assert.equal(compareVersions('2.0', '2.0.0'), 0);
+  assert.deepEqual(['0.4.1', '0.10.0', '0.2.0', '0.5.0'].sort(compareVersions), ['0.2.0', '0.4.1', '0.5.0', '0.10.0']);
+});
+
+test('latestVersion reads tags when there is no release, and ignores tags that are not versions', () => {
+  const base = { description: null, url: '', language: null, license: null, pushedAt: '' };
+  assert.equal(latestVersion({ ...base, releases: [], tags: ['v0.4.1', 'v0.5.0', 'v0.2.0'] }), '0.5.0');
+  assert.equal(latestVersion({ ...base, releases: [], tags: ['ffmpeg-9.0.2-fk3', 'v3.1.1', 'v2.1.0-stable'] }), '3.1.1');
+  assert.equal(latestVersion({ ...base, releases: [rel({ tag: 'v0.3.0' })], tags: ['v0.3.0', 'v0.4.0'] }), '0.4.0');
+  assert.equal(latestVersion({ ...base, releases: [rel({ tag: 'v1.0.0' })] }), '1.0.0');
+  assert.equal(latestVersion({ ...base, releases: [rel({ tag: 'v9.0.0', prerelease: true })], tags: [] }), null);
+  assert.equal(latestVersion({ ...base, releases: [], tags: [] }), null);
+  assert.equal(latestVersion(undefined), null);
+});
+
+test('every library on the site has a version', () => {
+  for (const repo of LIBRARY_REPOS) {
+    assert.ok(latestVersion(snapshot.repos[repo]), `${repo} has no version`);
+  }
 });
 
 // ---- release notes are cleaned before they are stored

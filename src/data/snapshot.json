@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-11-12T16:22:11.629Z",
+  "fetchedAt": "2026-11-12T16:35:39.742Z",
   "repos": {
     "Latheport": {
       "description": "Convert, compress, edit or extract any file. Drop it in, pick a format, done. Was ConvertAll.",
@@ -110,6 +110,14 @@
             }
           ]
         }
+      ],
+      "tags": [
+        "v1.5.1",
+        "v1.5.0",
+        "v1.4.0",
+        "v1.3.0",
+        "v1.2.0",
+        "v1.1.0"
       ]
     },
     "framekeep": {
@@ -251,6 +259,17 @@
           "body": "v1.1 Changelog\n\n- Switched from MJPG as the default recording codec, to H.264. MJPG is a fallback if for some reason H.264 doesn't work. This cuts recording file sizes by ~75%, with no loss in recording quality, while also using ~23% less RAM. You can also now customize which codec you want to record in, in the FrameKeep config.json file.\n- Updated MJPG Average Disk Usage Statistics (ADUS) after more testing. Also added H.264 ADUS\n\nFuture Plans:\n\n- Plan on adding H.265 (HEVC) and AV1 (AOMedia Video 1) for even more savings on storage, without losing any quality.",
           "assets": []
         }
+      ],
+      "tags": [
+        "v3.1.1",
+        "v3.1.0",
+        "v3.0.0",
+        "v2.1.0-stable",
+        "v2.0.0-stable",
+        "v1.1.0-stable",
+        "ffmpeg-9.0.2-fk4",
+        "ffmpeg-9.0.2-fk3",
+        "ffmpeg-9.0.2-fk2"
       ]
     },
     "childlock": {
@@ -294,6 +313,10 @@
             }
           ]
         }
+      ],
+      "tags": [
+        "v0.2.0",
+        "v0.1.0"
       ]
     },
     "bible-widget": {
@@ -326,6 +349,9 @@
             }
           ]
         }
+      ],
+      "tags": [
+        "v2.1.0"
       ]
     },
     "project-faraday": {
@@ -372,6 +398,11 @@
           "body": "",
           "assets": []
         }
+      ],
+      "tags": [
+        "v3.0.0",
+        "v2.0.0",
+        "stable-1.0.0"
       ]
     },
     "Locast": {
@@ -380,7 +411,8 @@
       "language": "Rust",
       "license": "MIT",
       "pushedAt": "2026-11-09T00:38:03Z",
-      "releases": []
+      "releases": [],
+      "tags": []
     },
     "packport": {
       "description": "Read RAR, 7z, ZIP, CAB, WIM, ISO, UDF, disk images and more, and write RAR, WIM, .Z and CPIO, in pure Python. No 7-Zip, no dependencies.",
@@ -494,6 +526,14 @@
             }
           ]
         }
+      ],
+      "tags": [
+        "v0.4.0",
+        "v0.3.2",
+        "v0.3.1",
+        "v0.3.0",
+        "v0.2.1",
+        "v0.2.0"
       ]
     },
     "bookport": {
@@ -573,6 +613,12 @@
             }
           ]
         }
+      ],
+      "tags": [
+        "v0.4.0",
+        "v0.3.0",
+        "v0.2.0",
+        "v0.1.0"
       ]
     },
     "pixport": {
@@ -652,6 +698,10 @@
             }
           ]
         }
+      ],
+      "tags": [
+        "v0.2.0",
+        "v0.1.0"
       ]
     },
     "meshport": {
@@ -660,7 +710,14 @@
       "language": "Python",
       "license": "NOASSERTION",
       "pushedAt": "2026-11-12T08:27:24Z",
-      "releases": []
+      "releases": [],
+      "tags": [
+        "v0.5.0",
+        "v0.4.1",
+        "v0.4.0",
+        "v0.3.0",
+        "v0.2.0"
+      ]
     },
     "puretech-tray": {
       "description": "Native Windows tray icon for Python in pure ctypes: menus, dark mode, toast notifications with buttons. Zero dependencies.",
@@ -668,7 +725,10 @@
       "language": "Python",
       "license": "MIT",
       "pushedAt": "2026-10-30T11:59:35Z",
-      "releases": []
+      "releases": [],
+      "tags": [
+        "v0.1.0"
+      ]
     },
     "puretech-tray-dotnet": {
       "description": "Native Windows tray icon for .NET with zero dependencies: menus, dark mode, toast notifications with buttons. Trimming and Native AOT safe.",
@@ -676,7 +736,10 @@
       "language": "C#",
       "license": "MIT",
       "pushedAt": "2026-10-31T03:42:21Z",
-      "releases": []
+      "releases": [],
+      "tags": [
+        "v0.1.0"
+      ]
     },
     "puretech-player": {
       "description": "Plays chunked recordings as one timeline: FFmpeg decoders, WASAPI sound, Direct3D 11 drawing in a Tk frame.",
@@ -684,7 +747,13 @@
       "language": "Python",
       "license": "MIT",
       "pushedAt": "2026-11-12T09:53:21Z",
-      "releases": []
+      "releases": [],
+      "tags": [
+        "v0.1.3",
+        "v0.1.2",
+        "v0.1.1",
+        "v0.1.0"
+      ]
     }
   },
   "pulls": [

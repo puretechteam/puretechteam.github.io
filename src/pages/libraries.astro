@@ -4,13 +4,12 @@ import PageHead from '../components/PageHead.astro';
 import snapshotJson from '../data/snapshot.json';
 import { libraries } from '../data/libraries.ts';
 import type { Snapshot } from '../lib/data.ts';
-import { latestRelease, versionFromTag } from '../lib/data.ts';
+import { latestVersion } from '../lib/data.ts';
 
 const snapshot = snapshotJson as Snapshot;
 const rows = libraries.map((lib) => {
   const repo = snapshot.repos[lib.repo];
-  const release = latestRelease(repo);
-  return { ...lib, url: repo.url, version: release ? versionFromTag(release.tag) : null };
+  return { ...lib, url: repo.url, version: latestVersion(repo) };
 });
 ---
 

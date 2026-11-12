@@ -26,6 +26,8 @@ export interface RepoSnapshot {
   license: string | null;
   pushedAt: string;
   releases: Release[];
+  /** Every git tag on the repository. Some libraries are versioned by tag alone, with no release. */
+  tags?: string[];
 }
 
 export interface Pull {
@@ -76,6 +78,28 @@ function published(releases: Release[]): Release[] {
 
 export function latestRelease(repo: RepoSnapshot | undefined): Release | null {
   return repo ? (published(repo.releases)[0] ?? null) : null;
+}
+
+/** Orders versions by their numbers, so 0.10.0 comes after 0.9.0. Negative when a is older than b. */
+export function compareVersions(a: string, b: string): number {
+  const x = a.split('.').map(Number);
+  const y = b.split('.').map(Number);
+  for (let i = 0; i < Math.max(x.length, y.length); i++) {
+    const d = (x[i] ?? 0) - (y[i] ?? 0);
+    if (d !== 0) return d;
+  }
+  return 0;
+}
+
+/**
+ * The newest version a repository has, from its published releases and its
+ * version tags together. A repository with tags but no release still has one.
+ */
+export function latestVersion(repo: RepoSnapshot | undefined): string | null {
+  if (!repo) return null;
+  const names = [...published(repo.releases).map((r) => r.tag), ...(repo.tags ?? [])];
+  const versions = names.filter(isVersionTag).map(versionFromTag);
+  return versions.length ? versions.sort(compareVersions).at(-1)! : null;
 }
 
 export function releaseByVersion(repo: RepoSnapshot | undefined, version: string): Release | null {

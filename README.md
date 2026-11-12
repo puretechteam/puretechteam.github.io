@@ -42,7 +42,8 @@ Astro's usage telemetry is switched off for every command (see `scripts/astro.mj
 
 - **What appears:** only repositories named in `src/data/roster.mjs`. Nothing else is shown.
 - **Versions, sizes, dates, checksums:** `src/data/snapshot.json`, written by `npm run snapshot`. A normal
-  build reads the snapshot and needs no network.
+  build reads the snapshot and needs no network. A version is the newest of a repository's published
+  releases and its version tags, so a library that is tagged but has no GitHub release still shows one.
 - **Words and measured figures:** `src/data/products.ts`, `src/data/pages.ts` and `src/data/libraries.ts`. Each figure
   carries the link it came from.
 - **Merged upstream:** pull requests by `puretechteam` that were merged into a repository Pure Tech does not

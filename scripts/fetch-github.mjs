@@ -40,9 +40,11 @@ function slimRelease(r) {
 
 const repos = {};
 for (const repo of ROSTER_REPOS) {
-  const [info, releases] = await Promise.all([
+  // Tags are read too: some libraries are versioned with a tag and no GitHub release.
+  const [info, releases, tags] = await Promise.all([
     get(`/repos/${OWNER}/${repo}`),
     get(`/repos/${OWNER}/${repo}/releases?per_page=30`),
+    get(`/repos/${OWNER}/${repo}/tags?per_page=100`),
   ]);
   repos[repo] = {
     description: info.description,
@@ -51,8 +53,9 @@ for (const repo of ROSTER_REPOS) {
     license: info.license?.spdx_id ?? null,
     pushedAt: info.pushed_at,
     releases: releases.map(slimRelease),
+    tags: tags.map((t) => t.name),
   };
-  console.log(`${repo}: ${releases.length} releases`);
+  console.log(`${repo}: ${releases.length} releases, ${tags.length} tags`);
 }
 
 const search = await get(

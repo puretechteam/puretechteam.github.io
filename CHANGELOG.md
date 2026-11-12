@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1 (2026-11-12)
+
+- Fixed: the Libraries page now shows a version for every library. Four of the seven (meshport,
+  puretech-tray, puretech-tray for .NET and Pure Tech Player) had none, because they are versioned with a
+  git tag and no GitHub release. Versions are now read from tags as well as releases: 7 of 7 shown, was 3 of 7.
+
 ## 0.1.0 (2026-11-12)
 
 The first release of the site.
