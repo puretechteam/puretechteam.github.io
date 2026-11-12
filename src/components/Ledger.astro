@@ -1,0 +1,71 @@
+---
+import type { Removed } from '../data/products.ts';
+import type { RepoSnapshot } from '../lib/data.ts';
+import { releaseByVersion } from '../lib/data.ts';
+
+interface Props {
+  items: Removed[];
+  repo: RepoSnapshot;
+  /** Smaller type, for use inside a page instead of the hero. */
+  compact?: boolean;
+  /** Spell out what the version means: "removed in 1.2.0". */
+  verbose?: boolean;
+}
+const { items, repo, compact = false, verbose = false } = Astro.props;
+
+const entries = items.map((item, i) => ({
+  ...item,
+  i,
+  url: releaseByVersion(repo, item.version)?.url ?? `${repo.url}/releases`,
+}));
+---
+
+<ul class:list={['ledger', { compact }]}>
+  {
+    entries.map((e) => (
+      <li>
+        <a href={e.url}>
+          <span class="strike display" style={`--i:${e.i}`}>
+            {e.name}
+          </span>
+          <span class="mono meta">
+            <span class={verbose ? undefined : 'sr-only'}>removed in </span>
+            <b>{e.version}</b>
+            {e.weight && ` · ${e.weight}`}
+          </span>
+        </a>
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  .ledger {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.9rem clamp(1.25rem, 3vw, 2.5rem);
+  }
+  .ledger a {
+    display: block;
+    text-decoration: none;
+  }
+  .ledger .strike {
+    display: inline-block;
+    font-size: clamp(1.5rem, 3.4vw, 2.75rem);
+  }
+  .ledger.compact .strike {
+    font-size: clamp(1.25rem, 2.2vw, 1.625rem);
+  }
+  .meta {
+    display: block;
+    margin-top: 0.3rem;
+    color: var(--mist);
+  }
+  .meta b {
+    font-weight: 600;
+    color: var(--paper);
+  }
+  .ledger a:hover .strike {
+    color: var(--paper);
+  }
+</style>

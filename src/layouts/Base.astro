@@ -1,0 +1,104 @@
+---
+import '../styles/global.css';
+import MarkDefs from '../components/MarkDefs.astro';
+import Intro from '../components/Intro.astro';
+import TopBar from '../components/TopBar.astro';
+import Footer from '../components/Footer.astro';
+import archivo from '@fontsource-variable/archivo/files/archivo-latin-wdth-normal.woff2?url';
+import martian from '@fontsource-variable/martian-mono/files/martian-mono-latin-wdth-normal.woff2?url';
+
+interface Props {
+  title: string;
+  description: string;
+}
+const { title, description } = Astro.props;
+const fullTitle = title === 'Pure Tech' ? title : `${title} · Pure Tech`;
+const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : null;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#050607" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f4f6f5" media="(prefers-color-scheme: light)" />
+    {canonical && <link rel="canonical" href={canonical} />}
+    {canonical && <meta property="og:url" content={canonical} />}
+    <link rel="alternate" type="application/rss+xml" title="Pure Tech releases" href="/updates.xml" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preload" href={archivo} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={martian} as="font" type="font/woff2" crossorigin />
+    <!-- Decides before first paint whether to show the load-up screen: once per session, never with reduced motion. -->
+    <script is:inline>
+      try {
+        var forced = /[?&]intro\b/.test(location.search);
+        if (
+          (forced || !sessionStorage.getItem('pt-intro')) &&
+          matchMedia('(prefers-reduced-motion: no-preference)').matches
+        ) {
+          document.documentElement.classList.add('intro-on');
+          sessionStorage.setItem('pt-intro', '1');
+        }
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <Intro />
+    <a class="skip mono" href="#main">Skip to content</a>
+    <MarkDefs />
+    <TopBar />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer />
+
+    <!-- On a phone a Windows download is no use, so the button offers to send the link instead. -->
+    <script is:inline>
+      (() => {
+        const phone = matchMedia('(pointer: coarse)').matches && !/Windows/.test(navigator.userAgent);
+        if (!phone) return;
+        document.querySelectorAll('a[data-dl]').forEach((a) => {
+          const direct = a.href;
+          const url = new URL(a.dataset.page || location.href, location.href).href;
+          a.textContent = 'Send link to my PC';
+          a.addEventListener('click', async (e) => {
+            e.preventDefault();
+            try {
+              if (navigator.share) await navigator.share({ title: a.dataset.title, url });
+              else {
+                await navigator.clipboard.writeText(url);
+                a.textContent = 'Link copied';
+              }
+            } catch {}
+          });
+          const alt = document.createElement('a');
+          alt.href = direct;
+          alt.className = 'dl-alt mono';
+          alt.textContent = 'Download anyway';
+          a.after(alt);
+        });
+      })();
+    </script>
+  </body>
+</html>
+
+<style>
+  .skip {
+    position: absolute;
+    left: var(--gutter);
+    top: -4rem;
+    z-index: 10;
+    background: var(--paper);
+    color: var(--ink);
+    padding: 0.75rem 1rem;
+  }
+  .skip:focus {
+    top: 0.5rem;
+  }
+</style>

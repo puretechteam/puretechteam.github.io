@@ -1,0 +1,72 @@
+---
+import type { Product } from '../data/products.ts';
+import type { Snapshot } from '../lib/data.ts';
+import { formatBytes, formatDate, latestRelease, primaryAsset, versionFromTag } from '../lib/data.ts';
+
+interface Props {
+  products: Product[];
+  snapshot: Snapshot;
+}
+const { products, snapshot } = Astro.props;
+
+const rows = products.map((p) => {
+  const repo = snapshot.repos[p.repo];
+  const release = latestRelease(repo);
+  const asset = primaryAsset(release);
+  return {
+    ...p,
+    href: p.page ? `/software/${p.slug}/` : repo.url,
+    repoUrl: repo.url,
+    version: release ? versionFromTag(release.tag) : null,
+    date: release ? formatDate(release.publishedAt) : null,
+    size: asset ? formatBytes(asset.size) : null,
+    asset,
+  };
+});
+---
+
+<ul class="rows">
+  {
+    rows.map((r) => (
+      <li>
+        <a class="row-name display" href={r.href}>
+          {r.name}
+        </a>
+        <p class="row-desc">
+          {r.tagline}
+          {r.fact && <span class="mono">{r.fact}</span>}
+        </p>
+        <p class="row-meta mono">
+          {r.version ? (
+            <>
+              {r.version}
+              {r.size && ` · ${r.size}`}
+              <br />
+              {r.date}
+            </>
+          ) : (
+            (r.status ?? 'No release yet')
+          )}
+        </p>
+        <div class="row-action">
+          {r.asset ? (
+            <a
+              class="btn btn-primary cut"
+              href={r.asset.url}
+              data-dl
+              data-page={r.href}
+              data-title={r.name}
+              aria-label={`Download ${r.name} ${r.version}, ${r.size}`}
+            >
+              Download
+            </a>
+          ) : (
+            <a class="cut-outline btn btn-quiet" href={r.repoUrl} aria-label={`${r.name} source on GitHub`}>
+              <span>Source</span>
+            </a>
+          )}
+        </div>
+      </li>
+    ))
+  }
+</ul>

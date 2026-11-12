@@ -1,0 +1,27 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+.astro/
+
+# secrets
+.env*
+!.env.example
+*.key
+*.pem
+
+# caches and logs
+.cache/
+*.log
+npm-debug.log*
+
+# editor and OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# local scratch
+scratch/
+screenshots/

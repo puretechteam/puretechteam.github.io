@@ -1,0 +1,20 @@
+---
+interface Props {
+  /** Rendered width in CSS units. Height follows the mark's proportions. */
+  width?: string;
+  /** Single color (currentColor) instead of the gradient. */
+  flat?: boolean;
+  class?: string;
+}
+const { width = '1.5rem', flat = false, class: cls } = Astro.props;
+---
+
+<svg
+  class={cls}
+  style={`width:${width};height:auto;aspect-ratio:534/479;display:block`}
+  fill={flat ? 'currentColor' : undefined}
+  aria-hidden="true"
+  focusable="false"
+>
+  <use href={flat ? '#pt-mark-flat' : '#pt-mark'} width="100%" height="100%"></use>
+</svg>

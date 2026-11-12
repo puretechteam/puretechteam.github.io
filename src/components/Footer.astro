@@ -1,0 +1,94 @@
+---
+import Mark from './Mark.astro';
+import { nav, external } from '../data/nav.ts';
+---
+
+<footer class="footer">
+  <div class="wrap footer-grid">
+    <div class="footer-brand">
+      <Mark width="2rem" />
+      <p class="mono muted">Pure Tech. Independent software for Windows.</p>
+    </div>
+
+    <ul class="footer-links mono">
+      <li><a href="/">Home</a></li>
+      {
+        nav.map((item) => (
+          <li>
+            <a href={item.href}>{item.label}</a>
+          </li>
+        ))
+      }
+      {
+        external.map((item) => (
+          <li>
+            <a href={item.href}>{item.label}</a>
+          </li>
+        ))
+      }
+    </ul>
+
+    <!-- Filled in by scripts/measure-pages.mjs after every build. -->
+    <dl class="datasheet mono" aria-label="This page, measured at build">
+      <div><dt>This page</dt><dd data-m="weight">not measured yet</dd></div>
+      <div><dt>Requests</dt><dd data-m="requests">not measured yet</dd></div>
+      <div><dt>Third-party requests</dt><dd data-m="third">not measured yet</dd></div>
+      <div><dt>Script</dt><dd data-m="script">not measured yet</dd></div>
+      <div><dt>Cookies and trackers</dt><dd data-m="cookies">not measured yet</dd></div>
+    </dl>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    border-top: 1px solid var(--line);
+    padding-block: 2.5rem 3.5rem;
+    margin-top: 1rem;
+  }
+  .footer-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 13rem) minmax(0, 1fr) minmax(0, 22rem);
+    gap: 2rem clamp(1.5rem, 4vw, 4rem);
+    align-items: start;
+  }
+  .footer-brand p {
+    margin-top: 0.9rem;
+    max-width: 12rem;
+  }
+  .footer-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 1.75rem;
+  }
+  .footer-links a {
+    display: inline-block;
+    padding-block: 0.75rem;
+    color: var(--mist);
+    text-decoration: none;
+  }
+  .footer-links a:hover {
+    color: var(--paper);
+  }
+  .datasheet {
+    margin: 0;
+  }
+  .datasheet div {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-block: 0.4rem;
+    border-top: 1px solid var(--line);
+  }
+  .datasheet div:first-child {
+    border-top: 0;
+    padding-top: 0.75rem;
+  }
+  .datasheet dt {
+    color: var(--mist);
+  }
+  @media (max-width: 860px) {
+    .footer-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>

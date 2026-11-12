@@ -1,0 +1,47 @@
+---
+import Base from '../../layouts/Base.astro';
+import ProductRows from '../../components/ProductRows.astro';
+import snapshotJson from '../../data/snapshot.json';
+import { products } from '../../data/products.ts';
+import type { Snapshot } from '../../lib/data.ts';
+import { formatDate } from '../../lib/data.ts';
+
+const snapshot = snapshotJson as Snapshot;
+---
+
+<Base
+  title="Software"
+  description="Everything Pure Tech currently publishes for Windows, with the version, download size and release date of each."
+>
+  <div class="wrap page-head">
+    <h1 class="display">Software</h1>
+    <p class="lede">
+      Everything we currently publish. Versions, sizes and dates come straight from each GitHub release, so a download
+      button always names the file you will get.
+    </p>
+  </div>
+
+  <section class="section" aria-label="All software">
+    <div class="wrap">
+      <ProductRows products={products} snapshot={snapshot} />
+      <p class="mono muted checked">Release data checked {formatDate(snapshot.fetchedAt)}.</p>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .page-head {
+    padding-block: clamp(2rem, 7vw, 5rem) clamp(2rem, 5vw, 3.5rem);
+  }
+  h1 {
+    font-size: clamp(2.75rem, 9vw, 6.5rem);
+    letter-spacing: -0.025em;
+    margin-left: -0.04em;
+  }
+  .lede {
+    margin-top: 1.25rem;
+  }
+  .checked {
+    margin-top: 2rem;
+  }
+</style>

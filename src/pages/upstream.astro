@@ -1,0 +1,63 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
+import snapshotJson from '../data/snapshot.json';
+import { OWNER } from '../data/roster.mjs';
+import type { Snapshot } from '../lib/data.ts';
+import { formatDate, upstreamPulls } from '../lib/data.ts';
+
+const snapshot = snapshotJson as Snapshot;
+const pulls = upstreamPulls(snapshot.pulls, OWNER);
+---
+
+<Base
+  title="Upstream"
+  description="Pull requests from Pure Tech that were merged into open-source projects we do not own."
+>
+  <PageHead title="Upstream">
+    Changes we sent to other people's open-source projects that their maintainers merged. Only merged pull requests are
+    listed. Open ones are not counted.
+  </PageHead>
+
+  <section class="section" aria-label="Merged pull requests">
+    <div class="wrap">
+      <ul class="plain-list">
+        {
+          pulls.map((p) => (
+            <li class="pull">
+              <span class="mono repo">{p.repo}</span>
+              <a href={p.url}>{p.title}</a>
+              <span class="mono muted">
+                #{p.number} · merged {formatDate(p.mergedAt as string)}
+              </span>
+            </li>
+          ))
+        }
+      </ul>
+      <p class="mono muted checked">
+        {pulls.length} merged. Checked against GitHub on {formatDate(snapshot.fetchedAt)}.
+      </p>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .pull {
+    display: grid;
+    grid-template-columns: minmax(0, 15rem) minmax(0, 1fr) auto;
+    gap: 0.25rem 1.5rem;
+    align-items: baseline;
+    padding-block: 0.9rem;
+  }
+  .repo {
+    color: var(--blue);
+  }
+  .checked {
+    margin-top: 2rem;
+  }
+  @media (max-width: 860px) {
+    .pull {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>

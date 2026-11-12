@@ -1,0 +1,334 @@
+---
+import { Image } from 'astro:assets';
+import Base from '../../layouts/Base.astro';
+import Section from '../../components/Section.astro';
+import Ledger from '../../components/Ledger.astro';
+import Measure from '../../components/Measure.astro';
+import snapshotJson from '../../data/snapshot.json';
+import { latheport as content, ledger } from '../../data/products.ts';
+import type { Snapshot } from '../../lib/data.ts';
+import {
+  formatBytes,
+  formatDate,
+  latestRelease,
+  primaryAsset,
+  releaseSummary,
+  sha256Of,
+  versionFromTag,
+} from '../../lib/data.ts';
+import shotMain from '../../assets/latheport/latheport.png';
+import shotChecks from '../../assets/latheport/after_converting_dark.png';
+
+const snapshot = snapshotJson as Snapshot;
+const repo = snapshot.repos.Latheport;
+const release = latestRelease(repo)!;
+const asset = primaryAsset(release)!;
+const version = versionFromTag(release.tag);
+const sha = sha256Of(asset);
+const recent = repo.releases.slice(0, 3);
+---
+
+<Base
+  title="Latheport"
+  description="Latheport converts, compresses, edits and extracts files on Windows, then checks every result against the original."
+>
+  <div class="wrap head">
+    <div>
+      <p class="mono muted crumb"><a href="/software/">Software</a> /</p>
+      <h1 class="display">Latheport</h1>
+      <p class="lede">{content.intro}</p>
+      <p class="formerly muted">{content.formerly}</p>
+    </div>
+
+    <aside class="download cut-outline" aria-label="Download">
+      <div class="download-inner">
+        <a class="btn btn-primary cut" href={asset.url} data-dl data-title="Latheport">Download for Windows</a>
+        <dl class="mono facts">
+          <div><dt>File</dt><dd>{asset.name}</dd></div>
+          <div><dt>Size</dt><dd>{formatBytes(asset.size)}</dd></div>
+          <div><dt>Version</dt><dd>{version}</dd></div>
+          <div><dt>Published</dt><dd>{formatDate(release.publishedAt)}</dd></div>
+          {
+            sha && (
+              <div class="sha">
+                <dt>SHA-256</dt>
+                <dd>{sha}</dd>
+              </div>
+            )
+          }
+        </dl>
+        <p class="install">{content.install}</p>
+      </div>
+    </aside>
+  </div>
+
+  <figure class="wrap shot">
+    <Image
+      src={shotMain}
+      alt="Latheport 1.5.0: the photo editor with a sunset photo captioned Golden hour and made warmer, beside its times against ConvertAll 1.4.0"
+      widths={[640, 960, shotMain.width]}
+      sizes="(max-width: 78rem) 92vw, 72rem"
+      loading="eager"
+    />
+  </figure>
+
+  <Section num="01" title="What it needs" id="needs">
+    <div class="two">
+      <div>
+        <ul class="plain-list">
+          {
+            content.needs.map((n) => (
+              <li class="need">
+                <strong>{n.name}</strong>
+                <span class="muted">{n.note}</span>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+      <div>
+        <p class="mono muted not-needed">No longer needed</p>
+        <Ledger items={ledger} repo={repo} compact />
+      </div>
+    </div>
+  </Section>
+
+  <Section num="02" title="What it handles" id="handles">
+    <table class="table">
+      <thead>
+        <tr class="mono"><th>Kind</th><th>For example</th><th>Engine</th></tr>
+      </thead>
+      <tbody>
+        {
+          content.kinds.map((k) => (
+            <tr>
+              <td>{k.kind}</td>
+              <td class="mono muted">{k.sample}</td>
+              <td class:list={['mono', { own: k.engine === 'Built in' }]}>{k.engine}</td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+    <p class="muted after-table">
+      The full list of formats is in the <a class="link" href={`${repo.url}#what-it-handles`}>README</a>.
+    </p>
+  </Section>
+
+  <Section num="03" title="Measured" id="measured">
+    <div class="measures">
+      {content.measured.map((m) => <Measure {...m} />)}
+    </div>
+  </Section>
+
+  <Section num="04" title="Every result is checked" id="checks">
+    <div class="two">
+      <p>{content.checks}</p>
+      <Image
+        src={shotChecks}
+        alt="After converting a two-part GLB model to STL: the status line says the parts were merged, and Details lists what STL could not keep and the checks"
+        widths={[480, shotChecks.width]}
+        sizes="(max-width: 860px) 92vw, 36rem"
+      />
+    </div>
+  </Section>
+
+  <Section num="05" title="Smart tools" id="smart">
+    <div class="two">
+      <p>{content.smartNote}</p>
+      <ul class="plain-list">
+        {
+          content.smartTools.map((t) => (
+            <li class="tool">
+              <span>{t.name}</span>
+              <span class="mono muted">{t.size}</span>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </Section>
+
+  <Section num="06" title="What it does not do" id="limits">
+    <ul class="plain-list limits">
+      {content.limits.map((l) => <li>{l}</li>)}
+    </ul>
+  </Section>
+
+  <Section num="07" title="Recent changes" id="changes">
+    <ul class="plain-list">
+      {
+        recent.map((r) => (
+          <li class="change">
+            <span class="mono muted">{formatDate(r.publishedAt)}</span>
+            <a href={r.url}>
+              <strong>{versionFromTag(r.tag)}</strong>
+            </a>
+            <span class="muted">{releaseSummary(r)}</span>
+          </li>
+        ))
+      }
+    </ul>
+  </Section>
+
+  <Section num="08" title="Source and license" id="source">
+    <p class="license">{content.license}</p>
+    <ul class="links mono">
+      <li><a class="link" href={repo.url}>Source on GitHub</a></li>
+      <li><a class="link" href={`${repo.url}/blob/main/CHANGELOG.md`}>Changelog</a></li>
+      <li><a class="link" href={`${repo.url}/issues`}>Report a problem</a></li>
+      <li><a class="link" href={`${repo.url}/blob/main/SECURITY.md`}>Security policy</a></li>
+    </ul>
+  </Section>
+</Base>
+
+<style>
+  .head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 24rem);
+    gap: 2.5rem clamp(2rem, 5vw, 5rem);
+    align-items: end;
+    padding-block: clamp(2rem, 6vw, 4.5rem) clamp(2rem, 4vw, 3rem);
+  }
+  .crumb a {
+    text-decoration: none;
+  }
+  .crumb a:hover {
+    color: var(--paper);
+  }
+  h1 {
+    font-size: clamp(2.75rem, 9.5vw, 7.5rem);
+    letter-spacing: -0.03em;
+    line-height: 0.92;
+    margin: 0.5rem 0 0 -0.04em;
+  }
+  .lede {
+    margin-top: 1.5rem;
+    max-width: 38rem;
+  }
+  .formerly {
+    margin-top: 1rem;
+    font-size: 0.9375rem;
+    max-width: 36rem;
+  }
+  .download {
+    --cut: 18px;
+  }
+  .download-inner {
+    padding: 1.25rem 1.25rem 1.5rem;
+  }
+  .download .btn {
+    width: 100%;
+    min-height: 3.25rem;
+    font-size: 0.8125rem;
+    --cut: 10px;
+  }
+  .facts {
+    margin: 1.1rem 0 0;
+  }
+  .facts div {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-block: 0.4rem;
+    border-top: 1px solid var(--line);
+  }
+  .facts div:first-child {
+    border-top: 0;
+  }
+  .facts dt {
+    color: var(--mist);
+    flex: none;
+  }
+  .facts dd {
+    text-align: right;
+    overflow-wrap: anywhere;
+  }
+  .facts .sha {
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+  .facts .sha dd {
+    text-align: left;
+    color: var(--mist);
+    font-size: 0.6875rem;
+  }
+  .install {
+    margin-top: 0.9rem;
+    font-size: 0.9375rem;
+    color: var(--mist);
+  }
+  .shot {
+    padding-bottom: clamp(2.5rem, 6vw, 4.5rem);
+  }
+  .shot :global(img) {
+    width: 100%;
+    border: 1px solid var(--line);
+  }
+  .two {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2rem clamp(1.5rem, 4vw, 4rem);
+    align-items: start;
+  }
+  .two :global(img) {
+    border: 1px solid var(--line);
+  }
+  .need {
+    display: grid;
+    grid-template-columns: minmax(0, 7rem) minmax(0, 1fr);
+    gap: 0.25rem 1rem;
+    font-size: 0.9375rem;
+  }
+  .not-needed {
+    margin-bottom: 0.9rem;
+  }
+  .own {
+    color: var(--green);
+  }
+  .after-table {
+    margin-top: 1.25rem;
+    font-size: 0.9375rem;
+  }
+  .tool {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .limits {
+    max-width: 44rem;
+  }
+  .change {
+    display: grid;
+    grid-template-columns: minmax(0, 7rem) minmax(0, 4rem) minmax(0, 1fr);
+    gap: 0.25rem 1.5rem;
+    align-items: baseline;
+    font-size: 0.9375rem;
+  }
+  .license {
+    max-width: 44rem;
+    color: var(--mist);
+  }
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 2rem;
+    margin-top: 1rem;
+  }
+  .links a {
+    display: inline-block;
+    padding-block: 0.75rem;
+  }
+  @media (max-width: 860px) {
+    .head,
+    .two {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+  @media (max-width: 620px) {
+    .change,
+    .need {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>

@@ -1,0 +1,167 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
+import Section from '../components/Section.astro';
+import { ledger } from '../data/products.ts';
+import { external } from '../data/nav.ts';
+
+const GH = 'https://github.com/puretechteam';
+
+const principles = [
+  {
+    title: 'It runs on your PC',
+    text: 'Your files stay where they are. FrameKeep never uploads anything and has no telemetry. Faraday makes no network calls at all. The smart tools in Latheport run their models on your computer and send nothing anywhere.',
+    links: [
+      { label: 'FrameKeep', href: '/software/framekeep/' },
+      { label: 'Faraday', href: '/software/faraday/' },
+      { label: 'Latheport', href: '/software/latheport/' },
+    ],
+  },
+  {
+    title: 'Nothing extra to install',
+    text: `A download is a zip or a single exe. There is no installer and no account. When a program leans on someone else's software, we work on replacing it: Latheport has dropped ${ledger.length} dependencies so far.`,
+    links: [{ label: 'The list', href: '/#main' }],
+  },
+  {
+    title: 'Numbers, not adjectives',
+    text: 'When we say something got smaller or faster, we say by how much and how it was measured. Every figure on this site links to the README or release note it was copied from.',
+    links: [{ label: 'Measured figures', href: '/#numbers' }],
+  },
+  {
+    title: 'We say what it cannot do',
+    text: 'Every product page has a section for limits. When we get something wrong, we say that too: Bible Widget 2.1.0 removed ten translations we did not have the right to share, and its page says so.',
+    links: [{ label: 'Bible Widget', href: '/software/bible-widget/' }],
+  },
+  {
+    title: 'The source is public',
+    text: 'Everything listed on this site is open source on GitHub, so you can read it, build it yourself, or tell us what is broken.',
+    links: [{ label: 'GitHub', href: GH }],
+  },
+];
+
+const contact: Record<string, string> = {
+  GitHub: 'Source code, releases and issue trackers for every project.',
+  Discord: 'Help, questions, a file that will not convert, or an idea.',
+  X: 'Release announcements.',
+};
+---
+
+<Base
+  title="About"
+  description="Pure Tech is an independent software brand that makes small Windows tools, publishes the source and measures its claims."
+>
+  <PageHead title="About">
+    Pure Tech is an independent software brand. We make small tools for Windows, publish the source, and measure what we
+    claim.
+  </PageHead>
+
+  <Section num="01" title="How we build" id="principles">
+    <ol class="principles">
+      {
+        principles.map((p) => (
+          <li>
+            <h3 class="display">{p.title}</h3>
+            <p>{p.text}</p>
+            <p class="mono">
+              {p.links.map((l) => (
+                <a class="link" href={l.href}>
+                  {l.label}
+                </a>
+              ))}
+            </p>
+          </li>
+        ))
+      }
+    </ol>
+  </Section>
+
+  <Section num="02" title="Where to find us" id="contact">
+    <ul class="plain-list contact">
+      {
+        external.map((e) => (
+          <li>
+            <a class="display" href={e.href}>
+              {e.label}
+            </a>
+            <span class="muted">{contact[e.label]}</span>
+          </li>
+        ))
+      }
+    </ul>
+  </Section>
+
+  <Section num="03" title="This site" id="site">
+    <div class="site-note">
+      <p>
+        This site follows the same rules as the software. It is plain static pages with no cookies, no trackers and no
+        requests to anyone else's servers. The fonts are served from here.
+      </p>
+      <p>
+        The footer of every page reports what that page takes to load. Those numbers are measured each time the site is
+        built, and the build fails if a page goes over its budget.
+      </p>
+      <p>
+        Versions, file sizes and dates come from GitHub's release data. Type is <a class="link" href="/licenses/archivo-OFL.txt">Archivo</a> and
+        <a class="link" href="/licenses/martian-mono-OFL.txt">Martian Mono</a>, both under the SIL Open Font License.
+      </p>
+    </div>
+  </Section>
+</Base>
+
+<style>
+  .principles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
+    gap: 2.5rem clamp(1.5rem, 4vw, 3.5rem);
+    counter-reset: p;
+  }
+  .principles li {
+    counter-increment: p;
+  }
+  .principles h3 {
+    font-size: 1.375rem;
+    line-height: 1.1;
+    margin-bottom: 0.7rem;
+  }
+  .principles p {
+    color: var(--mist);
+    font-size: 1rem;
+  }
+  .principles .mono {
+    margin-top: 0.6rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 1.25rem;
+  }
+  .principles .mono a {
+    display: inline-block;
+    padding-block: 0.5rem;
+  }
+  .contact li {
+    display: grid;
+    grid-template-columns: minmax(0, 10rem) minmax(0, 1fr);
+    gap: 0.25rem 1.5rem;
+    align-items: baseline;
+    padding-block: 0.9rem;
+  }
+  .contact a {
+    font-size: 1.375rem;
+    text-decoration: none;
+  }
+  .contact a:hover {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+  }
+  .site-note {
+    max-width: 44rem;
+    color: var(--mist);
+  }
+  .site-note p + p {
+    margin-top: 1rem;
+  }
+  @media (max-width: 520px) {
+    .contact li {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>

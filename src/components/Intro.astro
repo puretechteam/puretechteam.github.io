@@ -1,0 +1,128 @@
+---
+// The load-up screen. 1.4 seconds, once per browser session, no words.
+// A solid block appears, four pieces are cut away from it, and what is
+// left is the mark, which then takes its color. Nothing extra.
+// The screen leaves on the same diagonal the mark is cut on.
+//
+// It never holds the page back. The page loads underneath at full speed,
+// clicks pass through, and without JavaScript, or with reduced motion
+// switched on, it does not appear at all.
+// To watch it again while testing, add ?intro to any address.
+//
+// The four offcuts and the mark together fill the block exactly
+// (the box 378,311 to 896,774 in the mark's own coordinates).
+---
+
+<div class="intro" aria-hidden="true">
+  <svg class="intro-art" viewBox="298 231 678 623" focusable="false">
+    <g class="intro-offcuts">
+      <path style="--dx:150px;--dy:-150px;--r:10deg;--d:200ms" d="M758.5 311H896V448.5A137.5 137.5 0 0 0 758.5 311Z"></path>
+      <path style="--dx:-170px;--dy:150px;--r:-7deg;--d:290ms" d="M378 311L466 393L491 422V774H378Z"></path>
+      <path
+        style="--dx:170px;--dy:170px;--r:8deg;--d:380ms"
+        d="M588 586H758.5A137.5 137.5 0 0 0 896 448.5V774H491L588 698Z"></path>
+      <path
+        style="--dx:-70px;--dy:48px;--r:-5deg;--d:470ms"
+        d="M466 393L759.5 389A56.5 56.5 0 0 1 759.5 502H675L500 621C530 580 575 535 620 494L491 422Z"></path>
+    </g>
+    <g class="intro-color">
+      <path
+        fill="url(#pt-band)"
+        d="M378 311H758.5A137.5 137.5 0 0 1 758.5 586H552L675 502H759.5A56.5 56.5 0 0 0 759.5 389L466 393Z"
+      ></path>
+      <path fill="#0A6DB3" d="M500 621L552 586H588V621Z"></path>
+      <path fill="url(#pt-stem)" d="M491 422L620 494C575 535 530 580 500 621H588V698L491 774Z"></path>
+    </g>
+    <g class="intro-raw">
+      <path d="M378 311H758.5A137.5 137.5 0 0 1 758.5 586H552L675 502H759.5A56.5 56.5 0 0 0 759.5 389L466 393Z"></path>
+      <path d="M491 422L620 494C575 535 530 580 500 621L552 586H588V698L491 774Z"></path>
+    </g>
+  </svg>
+</div>
+
+<style is:global>
+  .intro {
+    display: none;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    html.intro-on .intro {
+      display: grid;
+      place-items: center;
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: var(--ink);
+      pointer-events: none;
+      animation: intro-out 1400ms cubic-bezier(0.7, 0, 0.2, 1) both;
+    }
+    html.intro-on .intro-art {
+      display: block;
+      width: min(52vw, 15rem);
+      height: auto;
+      overflow: visible;
+      animation: intro-block 140ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    }
+    /* Raw material: the offcuts and the uncolored mark are one flat color, so they read as a single block. */
+    html.intro-on .intro-offcuts path,
+    html.intro-on .intro-raw path {
+      fill: var(--paper);
+      stroke: var(--paper);
+      stroke-width: 1.5px;
+      stroke-linejoin: round;
+    }
+    html.intro-on .intro-offcuts path {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: intro-cut 340ms cubic-bezier(0.5, 0, 0.85, 0.35) both;
+      animation-delay: var(--d);
+    }
+    /* The colored mark stays out of sight until the block has been cut, so no color shows through the seams. */
+    html.intro-on .intro-color {
+      animation: intro-show 1ms 690ms both;
+    }
+    html.intro-on .intro-raw {
+      animation: intro-color 260ms 720ms ease-out both;
+    }
+    /* The struck words on the page wait until the screen has cut away. */
+    html.intro-on main .strike::after {
+      animation-delay: calc(var(--i, 0) * 60ms + 1350ms);
+    }
+    @keyframes intro-block {
+      from {
+        opacity: 0;
+        transform: scale(0.94);
+      }
+    }
+    @keyframes intro-cut {
+      to {
+        transform: translate(var(--dx), var(--dy)) rotate(var(--r));
+        opacity: 0;
+      }
+    }
+    @keyframes intro-show {
+      from {
+        opacity: 0;
+      }
+    }
+    @keyframes intro-color {
+      to {
+        opacity: 0;
+      }
+    }
+    @keyframes intro-out {
+      0%,
+      76% {
+        clip-path: polygon(0 0, 300% 0, 300% 300%, 0 300%, 0 0);
+      }
+      100% {
+        clip-path: polygon(200% 0, 300% 0, 300% 300%, 0 300%, 0 200%);
+        visibility: hidden;
+      }
+    }
+  }
+  @media print {
+    .intro {
+      display: none !important;
+    }
+  }
+</style>

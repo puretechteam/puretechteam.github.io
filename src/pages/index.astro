@@ -1,0 +1,255 @@
+---
+import Base from '../layouts/Base.astro';
+import Mark from '../components/Mark.astro';
+import Section from '../components/Section.astro';
+import Ledger from '../components/Ledger.astro';
+import ProductRows from '../components/ProductRows.astro';
+import Measure from '../components/Measure.astro';
+import snapshotJson from '../data/snapshot.json';
+import { products, ledger, measures, parts } from '../data/products.ts';
+import { OWNER, SOFTWARE_REPOS } from '../data/roster.mjs';
+import type { Snapshot } from '../lib/data.ts';
+import { formatDate, isVersionTag, liveDownload, releaseFeed, releaseSummary, upstreamPulls, versionFromTag } from '../lib/data.ts';
+
+const snapshot = snapshotJson as Snapshot;
+const latheport = snapshot.repos.Latheport;
+const pulls = upstreamPulls(snapshot.pulls, OWNER);
+const updates = releaseFeed(snapshot, SOFTWARE_REPOS)
+  .filter((f) => isVersionTag(f.release.tag))
+  .slice(0, 4);
+const live = liveDownload(latheport);
+const shownMeasures = measures.map((m) => (m.id === 'download' && live ? { ...m, after: live } : m));
+const nameOf = (repo: string) => products.find((p) => p.repo === repo)?.name ?? repo;
+---
+
+<Base
+  title="Pure Tech"
+  description="Independent software for Windows. It runs on your own PC, keeps your files there, and every claim comes with a number."
+>
+  <div class="hero-clip">
+  <div class="hero wrap">
+    <Mark flat width="min(46rem, 70vw)" class="hero-emboss" />
+    <h1 class="display">Nothing extra.</h1>
+    <p class="lede">
+      Independent software for Windows. It runs on your own PC, keeps your files there, and every claim comes with a
+      number.
+    </p>
+
+    <div class="removed">
+      <p class="removed-intro">
+        Here is what that means in practice. <a href="/software/latheport/">Latheport</a>, our file converter, used
+        to depend on {ledger.length} other pieces of software. Release by release we replaced each one with our own code.
+      </p>
+      <Ledger items={ledger} repo={latheport} verbose />
+      <p class="mono muted removed-note">Each name links to the release notes that record it.</p>
+    </div>
+  </div>
+  </div>
+
+  <Section num="01" title="Software" id="software">
+    <ProductRows products={products} snapshot={snapshot} />
+  </Section>
+
+  <Section num="02" title="Numbers, with their conditions" id="numbers">
+    <div class="measures">
+      {shownMeasures.map((m) => <Measure {...m} />)}
+    </div>
+  </Section>
+
+  <Section num="03" title="Built from our own parts" id="parts">
+    <p class="parts-intro">
+      Latheport reads most formats itself, through four libraries we wrote and publish. Each one took over from a
+      program you used to have to install.
+    </p>
+    <div class="parts">
+      <a class="part part-app cut" href="/software/latheport/">
+        <span class="display">Latheport</span>
+        <span class="mono">the app</span>
+      </a>
+      {
+        parts.map((p) => (
+          <a class="part cut-outline" href={snapshot.repos[p.repo].url}>
+            <span class="display">{p.repo}</span>
+            <span class="part-does">{p.does}</span>
+            <span class="mono part-replaced">
+              in place of <span class="strike">{p.replaced}</span>
+            </span>
+          </a>
+        ))
+      }
+    </div>
+  </Section>
+
+  <Section num="04" title="Merged upstream" id="upstream">
+    <ul class="plain-list">
+      {
+        pulls.map((p) => (
+          <li class="pull">
+            <span class="mono pull-repo">{p.repo}</span>
+            <a href={p.url}>{p.title}</a>
+            <span class="mono muted">{formatDate(p.mergedAt as string)}</span>
+          </li>
+        ))
+      }
+    </ul>
+    <p class="mono muted list-note">
+      Pull requests merged into projects we do not own. <a class="link" href="/upstream/">All of them</a>
+    </p>
+  </Section>
+
+  <Section num="05" title="Latest releases" id="updates">
+    <ul class="plain-list">
+      {
+        updates.map(({ repo, release }) => (
+          <li class="update">
+            <span class="mono muted">{formatDate(release.publishedAt)}</span>
+            <a href={release.url}>
+              <strong>
+                {nameOf(repo)} {versionFromTag(release.tag)}
+              </strong>
+            </a>
+            <span class="muted update-line">{releaseSummary(release)}</span>
+          </li>
+        ))
+      }
+    </ul>
+    <p class="mono muted list-note"><a class="link" href="/updates/">Every release</a></p>
+  </Section>
+</Base>
+
+<style>
+  .hero-clip {
+    overflow-x: clip;
+  }
+  .hero {
+    position: relative;
+    isolation: isolate;
+    padding-block: clamp(2.5rem, 9vw, 7rem) clamp(3rem, 7vw, 5.5rem);
+  }
+  .hero :global(.hero-emboss) {
+    position: absolute;
+    right: calc(var(--gutter) * -1 - 4rem);
+    top: -5rem;
+    color: var(--emboss);
+    z-index: -1;
+    pointer-events: none;
+  }
+  h1 {
+    font-size: clamp(3.25rem, 8.6vw, 7.75rem);
+    letter-spacing: -0.03em;
+    line-height: 0.9;
+    margin-left: -0.04em;
+  }
+  .lede {
+    margin-top: clamp(1.25rem, 3vw, 2.25rem);
+  }
+  .removed {
+    margin-top: clamp(2.5rem, 6vw, 4.5rem);
+  }
+  .removed-intro {
+    max-width: 40rem;
+    font-size: clamp(1.0625rem, 1.5vw, 1.25rem);
+    line-height: 1.5;
+    margin-bottom: 1.75rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--line);
+  }
+  .removed-note {
+    margin-top: 1.5rem;
+  }
+
+  .parts-intro {
+    color: var(--mist);
+    max-width: 36rem;
+    margin-bottom: 1.5rem;
+  }
+  .parts {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.75rem;
+    --cut: 14px;
+  }
+  .part {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 1.1rem 1.1rem 1.4rem;
+    text-decoration: none;
+  }
+  .part .display {
+    font-size: 1.25rem;
+  }
+  .part-app {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: space-between;
+    background: var(--paper);
+    color: var(--ink);
+    padding-block: 0.9rem 1rem;
+  }
+  .part-does {
+    color: var(--mist);
+    font-size: 0.9375rem;
+    line-height: 1.4;
+  }
+  .part-replaced {
+    margin-top: auto;
+    padding-top: 0.75rem;
+    color: var(--mist);
+  }
+  .part-replaced .strike {
+    white-space: normal;
+    /* Small text, so it takes the secondary color (6.7 to 1) instead of the dimmer struck-word color. */
+    color: var(--mist);
+  }
+  .part-replaced .strike::after {
+    display: none;
+  }
+  .part-replaced .strike {
+    text-decoration: line-through;
+    text-decoration-color: var(--green);
+    text-decoration-thickness: 2px;
+  }
+  .part:hover .display {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+  }
+  @media (max-width: 960px) {
+    .parts {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (max-width: 440px) {
+    .parts {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  .pull,
+  .update {
+    display: grid;
+    grid-template-columns: minmax(0, 13rem) minmax(0, 1fr) auto;
+    gap: 0.25rem 1.5rem;
+    align-items: baseline;
+  }
+  .update {
+    grid-template-columns: minmax(0, 7rem) minmax(0, 14rem) minmax(0, 1fr);
+  }
+  .pull-repo {
+    color: var(--blue);
+  }
+  .update-line {
+    font-size: 0.9375rem;
+    line-height: 1.45;
+  }
+  .list-note {
+    margin-top: 1.25rem;
+  }
+  @media (max-width: 720px) {
+    .pull,
+    .update {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>

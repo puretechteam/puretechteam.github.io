@@ -1,0 +1,32 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="Page not found" description="This page does not exist.">
+  <div class="wrap missing">
+    <p class="mono muted">404</p>
+    <h1 class="display"><span class="strike">This page</span></h1>
+    <p class="lede">There is nothing at this address. It may have moved, or it may never have existed.</p>
+    <p class="actions">
+      <a class="btn btn-primary cut" href="/software/">See the software</a>
+      <a class="btn btn-quiet cut-outline" href="/"><span>Go home</span></a>
+    </p>
+  </div>
+</Base>
+
+<style>
+  .missing {
+    padding-block: clamp(3rem, 12vw, 9rem);
+  }
+  h1 {
+    font-size: clamp(2.75rem, 9vw, 6.5rem);
+    letter-spacing: -0.025em;
+    margin: 0.75rem 0 1.5rem -0.04em;
+  }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 2rem;
+  }
+</style>

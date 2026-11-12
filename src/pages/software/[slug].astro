@@ -1,0 +1,235 @@
+---
+import { Image } from 'astro:assets';
+import Base from '../../layouts/Base.astro';
+import Section from '../../components/Section.astro';
+import Measure from '../../components/Measure.astro';
+import DownloadBox from '../../components/DownloadBox.astro';
+import snapshotJson from '../../data/snapshot.json';
+import { products } from '../../data/products.ts';
+import { pages } from '../../data/pages.ts';
+import type { Snapshot } from '../../lib/data.ts';
+import { formatDate, isVersionTag, releaseSummary, versionFromTag } from '../../lib/data.ts';
+
+export function getStaticPaths() {
+  return products.filter((p) => p.page && pages[p.slug]).map((p) => ({ params: { slug: p.slug } }));
+}
+
+const { slug } = Astro.params;
+const product = products.find((p) => p.slug === slug)!;
+const content = pages[slug as string];
+const snapshot = snapshotJson as Snapshot;
+const repo = snapshot.repos[product.repo];
+const recent = repo.releases.filter((r) => !r.draft && !r.prerelease && isVersionTag(r.tag)).slice(0, 3);
+
+// Section numbers follow whichever sections this product has.
+let n = 0;
+const num = () => String(++n).padStart(2, '0');
+---
+
+<Base title={product.name} description={`${product.name}: ${product.tagline}`}>
+  <div class="wrap head">
+    <div>
+      <p class="mono muted crumb"><a href="/software/">Software</a> /</p>
+      <h1 class="display">{product.name}</h1>
+      <p class="lede">{content.intro}</p>
+    </div>
+    <DownloadBox name={product.name} repo={repo} install={content.install} firstRun={content.firstRun} />
+  </div>
+
+  <figure class="wrap shot">
+    <Image
+      src={content.shot.src}
+      alt={content.shot.alt}
+      widths={[640, 960, content.shot.src.width]}
+      sizes="(max-width: 78rem) 92vw, 72rem"
+      loading="eager"
+    />
+  </figure>
+
+  <Section num={num()} title="What it does" id="does">
+    <ul class="plain-list does">
+      {content.does.map((d) => <li>{d}</li>)}
+    </ul>
+  </Section>
+
+  <Section num={num()} title="What it needs" id="needs">
+    <ul class="plain-list narrow">
+      {
+        content.needs.map((item) => (
+          <li class="need">
+            <strong>{item.name}</strong>
+            <span class="muted">{item.note}</span>
+          </li>
+        ))
+      }
+    </ul>
+  </Section>
+
+  {
+    content.measured && (
+      <Section num={num()} title="Measured" id="measured">
+        <div class="measures">
+          {content.measured.map((m) => (
+            <Measure {...m} />
+          ))}
+        </div>
+      </Section>
+    )
+  }
+
+  {
+    content.table && (
+      <Section num={num()} title={content.table.title} id="table">
+        <table class="table">
+          <thead>
+            <tr class="mono">
+              {content.table.head.map((h) => (
+                <th>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {content.table.rows.map((row) => (
+              <tr>
+                {row.map((cell, i) => (
+                  <td class={i > 0 ? 'mono' : undefined}>{cell}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p class="muted after-table">
+          {content.table.note} <a class="link" href={content.table.source.url}>{content.table.source.label}</a>.
+        </p>
+      </Section>
+    )
+  }
+
+  {
+    content.notice && (
+      <Section num={num()} title={content.notice.title} id="notice">
+        <p class="notice">{content.notice.text}</p>
+        <p class="after-table">
+          <a class="link" href={content.notice.source.url}>{content.notice.source.label}</a>
+        </p>
+      </Section>
+    )
+  }
+
+  <Section num={num()} title={content.limitsTitle} id="limits">
+    <ul class="plain-list narrow">
+      {content.limits.map((l) => <li>{l}</li>)}
+    </ul>
+  </Section>
+
+  {
+    recent.length > 0 && (
+      <Section num={num()} title="Recent changes" id="changes">
+        <ul class="plain-list">
+          {recent.map((r) => (
+            <li class="change">
+              <span class="mono muted">{formatDate(r.publishedAt)}</span>
+              <a href={r.url}>
+                <strong>{versionFromTag(r.tag)}</strong>
+              </a>
+              <span class="muted">{releaseSummary(r)}</span>
+            </li>
+          ))}
+        </ul>
+      </Section>
+    )
+  }
+
+  <Section num={num()} title="Source and license" id="source">
+    <p class="license">{content.license}</p>
+    <ul class="links mono">
+      <li><a class="link" href={repo.url}>Source on GitHub</a></li>
+      <li><a class="link" href={`${repo.url}/releases`}>All releases</a></li>
+      <li><a class="link" href={`${repo.url}/issues`}>Report a problem</a></li>
+    </ul>
+  </Section>
+</Base>
+
+<style>
+  .head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 24rem);
+    gap: 2.5rem clamp(2rem, 5vw, 5rem);
+    align-items: end;
+    padding-block: clamp(2rem, 6vw, 4.5rem) clamp(2rem, 4vw, 3rem);
+  }
+  .crumb a {
+    text-decoration: none;
+  }
+  .crumb a:hover {
+    color: var(--paper);
+  }
+  h1 {
+    font-size: clamp(2.5rem, 8.6vw, 7rem);
+    letter-spacing: -0.03em;
+    line-height: 0.92;
+    margin: 0.5rem 0 0 -0.04em;
+  }
+  .lede {
+    margin-top: 1.5rem;
+    max-width: 38rem;
+  }
+  .shot {
+    padding-bottom: clamp(2.5rem, 6vw, 4.5rem);
+  }
+  .shot :global(img) {
+    max-width: min(100%, 60rem);
+    border: 1px solid var(--line);
+  }
+  .does,
+  .narrow {
+    max-width: 46rem;
+  }
+  .need {
+    display: grid;
+    grid-template-columns: minmax(0, 8rem) minmax(0, 1fr);
+    gap: 0.25rem 1rem;
+  }
+  .after-table {
+    margin-top: 1.25rem;
+    font-size: 0.9375rem;
+    max-width: 46rem;
+  }
+  .notice {
+    max-width: 46rem;
+    font-size: 1.125rem;
+    line-height: 1.55;
+  }
+  .change {
+    display: grid;
+    grid-template-columns: minmax(0, 7rem) minmax(0, 4rem) minmax(0, 1fr);
+    gap: 0.25rem 1.5rem;
+    align-items: baseline;
+    font-size: 0.9375rem;
+  }
+  .license {
+    max-width: 44rem;
+    color: var(--mist);
+  }
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 2rem;
+    margin-top: 1rem;
+  }
+  .links a {
+    display: inline-block;
+    padding-block: 0.75rem;
+  }
+  @media (max-width: 860px) {
+    .head {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+  @media (max-width: 620px) {
+    .change,
+    .need {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>

@@ -1,0 +1,66 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
+import snapshotJson from '../data/snapshot.json';
+import { products } from '../data/products.ts';
+import { libraries } from '../data/libraries.ts';
+import { ROSTER_REPOS } from '../data/roster.mjs';
+import type { Snapshot } from '../lib/data.ts';
+import { formatDate, isVersionTag, releaseFeed, releaseSummary, versionFromTag } from '../lib/data.ts';
+
+const snapshot = snapshotJson as Snapshot;
+// Tags like "ffmpeg-9.0.2-fk3" are build parts, not releases of the program.
+const feed = releaseFeed(snapshot, ROSTER_REPOS).filter((f) => isVersionTag(f.release.tag));
+const nameOf = (repo: string) =>
+  products.find((p) => p.repo === repo)?.name ?? libraries.find((l) => l.repo === repo)?.name ?? repo;
+---
+
+<Base title="Updates" description="Every release of Pure Tech software and libraries, newest first.">
+  <PageHead title="Updates">
+    Every release, newest first, taken from GitHub. There is also a <a class="link" href="/updates.xml">feed</a> for
+    your reader.
+  </PageHead>
+
+  <section class="section" aria-label="All releases">
+    <div class="wrap">
+      <ul class="plain-list">
+        {
+          feed.map(({ repo, release }) => (
+            <li class="update">
+              <span class="mono muted">{formatDate(release.publishedAt)}</span>
+              <a href={release.url}>
+                <strong>
+                  {nameOf(repo)} {versionFromTag(release.tag)}
+                </strong>
+              </a>
+              <span class="muted line">{releaseSummary(release)}</span>
+            </li>
+          ))
+        }
+      </ul>
+      <p class="mono muted checked">{feed.length} releases. Checked against GitHub on {formatDate(snapshot.fetchedAt)}.</p>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .update {
+    display: grid;
+    grid-template-columns: minmax(0, 7rem) minmax(0, 15rem) minmax(0, 1fr);
+    gap: 0.25rem 1.5rem;
+    align-items: baseline;
+    padding-block: 0.9rem;
+  }
+  .line {
+    font-size: 0.9375rem;
+    line-height: 1.45;
+  }
+  .checked {
+    margin-top: 2rem;
+  }
+  @media (max-width: 720px) {
+    .update {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>

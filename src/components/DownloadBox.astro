@@ -1,0 +1,112 @@
+---
+import type { RepoSnapshot } from '../lib/data.ts';
+import { formatBytes, formatDate, latestRelease, primaryAsset, sha256Of, versionFromTag } from '../lib/data.ts';
+
+interface Props {
+  name: string;
+  repo: RepoSnapshot;
+  install: string;
+  firstRun?: string;
+}
+const { name, repo, install, firstRun } = Astro.props;
+const release = latestRelease(repo);
+const asset = primaryAsset(release);
+const sha = sha256Of(asset);
+---
+
+<aside class="download cut-outline" aria-label="Download">
+  <div class="download-inner">
+    {
+      release && asset ? (
+        <>
+          <a class="btn btn-primary cut" href={asset.url} data-dl data-title={name}>
+            Download for Windows
+          </a>
+          <dl class="mono facts">
+            <div>
+              <dt>File</dt>
+              <dd>{asset.name}</dd>
+            </div>
+            <div>
+              <dt>Size</dt>
+              <dd>{formatBytes(asset.size)}</dd>
+            </div>
+            <div>
+              <dt>Version</dt>
+              <dd>{versionFromTag(release.tag)}</dd>
+            </div>
+            <div>
+              <dt>Published</dt>
+              <dd>{formatDate(release.publishedAt)}</dd>
+            </div>
+            {sha && (
+              <div class="sha">
+                <dt>SHA-256</dt>
+                <dd>{sha}</dd>
+              </div>
+            )}
+          </dl>
+          <p class="install">{install}</p>
+          {firstRun && <p class="install">{firstRun}</p>}
+        </>
+      ) : (
+        <>
+          <a class="btn btn-quiet cut-outline" href={repo.url}>
+            <span>Source on GitHub</span>
+          </a>
+          <p class="install">No release yet.</p>
+        </>
+      )
+    }
+  </div>
+</aside>
+
+<style>
+  .download {
+    --cut: 18px;
+  }
+  .download-inner {
+    padding: 1.25rem 1.25rem 1.5rem;
+  }
+  .download .btn {
+    width: 100%;
+    min-height: 3.25rem;
+    font-size: 0.8125rem;
+    --cut: 10px;
+  }
+  .facts {
+    margin: 1.1rem 0 0;
+  }
+  .facts div {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-block: 0.4rem;
+    border-top: 1px solid var(--line);
+  }
+  .facts div:first-child {
+    border-top: 0;
+  }
+  .facts dt {
+    color: var(--mist);
+    flex: none;
+  }
+  .facts dd {
+    text-align: right;
+    overflow-wrap: anywhere;
+  }
+  .facts .sha {
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+  .facts .sha dd {
+    text-align: left;
+    color: var(--mist);
+    font-size: 0.6875rem;
+  }
+  .install {
+    margin-top: 0.9rem;
+    font-size: 0.9375rem;
+    color: var(--mist);
+  }
+</style>

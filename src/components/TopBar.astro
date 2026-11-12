@@ -1,0 +1,166 @@
+---
+import Mark from './Mark.astro';
+import { nav, external } from '../data/nav.ts';
+
+const here = Astro.url.pathname;
+const isCurrent = (href: string) => (href === '/' ? here === '/' : here.startsWith(href));
+---
+
+<header class="topbar wrap">
+  <a class="brand" href="/">
+    <Mark width="1.75rem" class="brand-mark" />
+    <span class="brand-word display">PURETECH</span>
+    <span class="sr-only">home</span>
+  </a>
+
+  <nav class="nav-inline mono" aria-label="Main">
+    {
+      nav.map((item) => (
+        <a href={item.href} aria-current={isCurrent(item.href) ? 'page' : undefined}>
+          {item.label}
+        </a>
+      ))
+    }
+    <span class="nav-sep" aria-hidden="true"></span>
+    {external.map((item) => <a href={item.href}>{item.label}</a>)}
+  </nav>
+
+  <details class="nav-sheet">
+    <summary class="mono cut-outline"><span class="when-closed">Index</span><span class="when-open">Close</span></summary>
+    <nav class="sheet" aria-label="Main">
+      <ul class="sheet-main display">
+        {
+          nav.map((item) => (
+            <li>
+              <a href={item.href} aria-current={isCurrent(item.href) ? 'page' : undefined}>
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+      <ul class="sheet-ext mono">
+        {
+          external.map((item) => (
+            <li>
+              <a href={item.href}>{item.label}</a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+  </details>
+</header>
+
+<style>
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding-block: 1.25rem;
+    position: relative;
+    z-index: 5;
+  }
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7rem;
+    text-decoration: none;
+    min-height: 2.75rem;
+  }
+  .brand :global(.brand-mark) {
+    view-transition-name: pt-mark;
+  }
+  .brand-word {
+    font-size: 0.875rem;
+    font-stretch: 125%;
+    letter-spacing: 0.16em;
+    line-height: 1;
+  }
+  .nav-inline {
+    display: flex;
+    align-items: center;
+    gap: clamp(1rem, 2.2vw, 2rem);
+  }
+  .nav-inline a {
+    color: var(--mist);
+    text-decoration: none;
+    padding-block: 0.75rem;
+  }
+  .nav-inline a:hover,
+  .nav-inline a[aria-current='page'] {
+    color: var(--paper);
+  }
+  .nav-inline a[aria-current='page'] {
+    box-shadow: inset 0 -2px 0 var(--green);
+  }
+  .nav-sep {
+    width: 1px;
+    height: 1rem;
+    background: var(--line-strong);
+  }
+  .nav-sheet {
+    display: none;
+  }
+  .nav-sheet summary {
+    list-style: none;
+    cursor: pointer;
+    min-height: 2.75rem;
+    min-width: 4.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding-inline: 0.9rem;
+  }
+  .nav-sheet summary::-webkit-details-marker {
+    display: none;
+  }
+  .when-open,
+  .nav-sheet[open] .when-closed {
+    display: none;
+  }
+  .nav-sheet[open] .when-open {
+    display: inline;
+  }
+  .sheet {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    min-height: calc(100dvh - 100%);
+    background: var(--ink);
+    padding: 1.5rem var(--gutter) 3rem;
+    border-top: 1px solid var(--line);
+  }
+  .sheet-main {
+    font-size: clamp(2rem, 11vw, 3rem);
+  }
+  .sheet-main a {
+    display: block;
+    padding-block: 0.35em;
+    text-decoration: none;
+  }
+  .sheet-main a[aria-current='page'] {
+    color: var(--green);
+  }
+  .sheet-ext {
+    margin-top: 2rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--line);
+    color: var(--mist);
+  }
+  .sheet-ext a {
+    display: block;
+    padding-block: 0.85rem;
+    text-decoration: none;
+  }
+  @media (max-width: 860px) {
+    .nav-inline {
+      display: none;
+    }
+    .nav-sheet {
+      display: block;
+    }
+  }
+</style>

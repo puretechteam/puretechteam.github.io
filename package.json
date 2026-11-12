@@ -1,0 +1,21 @@
+{
+  "name": "puretech-website",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The official Pure Tech website",
+  "author": "Pure Tech",
+  "scripts": {
+    "dev": "node scripts/astro.mjs dev",
+    "build": "node scripts/astro.mjs build && node scripts/measure-pages.mjs",
+    "preview": "node scripts/astro.mjs preview",
+    "snapshot": "node scripts/fetch-github.mjs",
+    "test": "node --test",
+    "check-links": "node scripts/check-links.mjs"
+  },
+  "dependencies": {
+    "@fontsource-variable/archivo": "^5.3.0",
+    "@fontsource-variable/martian-mono": "^5.3.0",
+    "astro": "^7.4.11"
+  }
+}

@@ -1,0 +1,83 @@
+---
+import { ratioPercent } from '../lib/data.ts';
+
+interface Value {
+  value: number;
+  text: string;
+  note: string;
+  ref?: string;
+}
+interface Props {
+  label: string;
+  product?: string;
+  before?: Value;
+  after: Value;
+  conditions: string;
+  source: { label: string; url: string };
+}
+const { label, product, before, after, conditions, source } = Astro.props;
+const pct = before ? ratioPercent(before.value, after.value) : null;
+---
+
+<div class="measure">
+  <p class="measure-label mono">{product ? `${product}: ${label}` : label}</p>
+
+  {
+    before ? (
+      <>
+        <p class="measure-values">
+          <span class="measure-before display">{before.text}</span>
+          <span class="measure-to mono">to</span>
+          <span class="measure-after display">{after.text}</span>
+        </p>
+        <div class="bars" aria-hidden="true">
+          <div class="bar bar-before" />
+          <div class="bar bar-after" style={`width:${pct}%`} />
+        </div>
+        <p class="measure-notes mono">
+          <span>
+            {before.note} {before.ref && <b class="ref-before">{before.ref}</b>}
+          </span>
+          <span>
+            {after.note} {after.ref && <b class="ref-after">{after.ref}</b>}
+          </span>
+        </p>
+      </>
+    ) : (
+      <>
+        <p class="measure-values">
+          <span class="measure-after display single">{after.text}</span>
+        </p>
+        <div class="bars" aria-hidden="true">
+          <div class="bar bar-after" />
+        </div>
+        <p class="measure-notes mono">
+          <span>{after.note}</span>
+        </p>
+      </>
+    )
+  }
+
+  <details class="conditions">
+    <summary class="mono">How it was measured</summary>
+    <p>
+      {conditions}
+      <a class="link" href={source.url}>{source.label}</a>.
+    </p>
+  </details>
+</div>
+
+<style>
+  .single {
+    color: var(--paper);
+  }
+  b {
+    font-weight: 600;
+  }
+  .ref-before {
+    color: var(--blue);
+  }
+  .ref-after {
+    color: var(--green);
+  }
+</style>
