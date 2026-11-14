@@ -10,7 +10,7 @@ the public GitHub releases, and every measured figure links to the README or rel
 
 | Route | What it is |
 |---|---|
-| `/` | Home: what Latheport no longer needs, the software list, measured numbers, libraries, merged upstream pull requests, latest releases |
+| `/` | Home: what Latheport no longer needs, the software list, a games teaser, measured numbers, libraries, merged upstream pull requests, latest releases |
 | `/software/` | Every current program with its version, download size and release date |
 | `/software/<name>/` | One page per program: download, checksum, what it does, what it needs, measurements, limits |
 | `/libraries/` | The open-source libraries, with install lines |

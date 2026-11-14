@@ -4,6 +4,7 @@ import Mark from '../components/Mark.astro';
 import Section from '../components/Section.astro';
 import Ledger from '../components/Ledger.astro';
 import ProductRows from '../components/ProductRows.astro';
+import GamesTeaser from '../components/GamesTeaser.astro';
 import Measure from '../components/Measure.astro';
 import snapshotJson from '../data/snapshot.json';
 import { products, ledger, measures, parts } from '../data/products.ts';
@@ -50,13 +51,17 @@ const nameOf = (repo: string) => products.find((p) => p.repo === repo)?.name ?? 
     <ProductRows products={products} snapshot={snapshot} />
   </Section>
 
-  <Section num="02" title="Numbers, with their conditions" id="numbers">
+  <Section num="02" title="Games" id="games">
+    <GamesTeaser />
+  </Section>
+
+  <Section num="03" title="Numbers, with their conditions" id="numbers">
     <div class="measures">
       {shownMeasures.map((m) => <Measure {...m} />)}
     </div>
   </Section>
 
-  <Section num="03" title="Built from our own parts" id="parts">
+  <Section num="04" title="Built from our own parts" id="parts">
     <p class="parts-intro">
       Latheport reads most formats itself, through four libraries we wrote and publish. Each one took over from a
       program you used to have to install.
@@ -80,7 +85,7 @@ const nameOf = (repo: string) => products.find((p) => p.repo === repo)?.name ?? 
     </div>
   </Section>
 
-  <Section num="04" title="Merged upstream" id="upstream">
+  <Section num="05" title="Merged upstream" id="upstream">
     <ul class="plain-list">
       {
         pulls.map((p) => (
@@ -97,7 +102,7 @@ const nameOf = (repo: string) => products.find((p) => p.repo === repo)?.name ?? 
     </p>
   </Section>
 
-  <Section num="05" title="Latest releases" id="updates">
+  <Section num="06" title="Latest releases" id="updates">
     <ul class="plain-list">
       {
         updates.map(({ repo, release }) => (

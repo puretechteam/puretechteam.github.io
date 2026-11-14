@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.0 (2026-11-14)
+
+- Added: a Games section on the home page. We have started making games, and it says so and nothing more:
+  no titles, platforms or dates are given.
+
 ## 0.1.1 (2026-11-12)
 
 - Fixed: the Libraries page now shows a version for every library. Four of the seven (meshport,

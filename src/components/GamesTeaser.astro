@@ -1,0 +1,93 @@
+---
+// A teaser, and nothing more than is true: games are being made, and
+// there is nothing to show yet. The block is the uncut one from the
+// load-up screen. Every unknown is marked ?? instead of being guessed at.
+import { external } from '../data/nav.ts';
+
+const x = external.find((e) => e.label === 'X')!;
+const unknowns = ['Title', 'Platform', 'Release'];
+---
+
+<div class="tease">
+  <div class="tease-block cut" aria-hidden="true">
+    <span class="display">??</span>
+  </div>
+
+  <div class="tease-copy">
+    <p class="tease-line display">We have started making games.</p>
+    <p class="muted">
+      No titles, no dates and no screenshots yet. This block is still being cut. When there is something real to show,
+      it goes here first.
+    </p>
+    <dl class="tease-facts mono">
+      {
+        unknowns.map((label) => (
+          <div>
+            <dt>{label}</dt>
+            <dd>??</dd>
+          </div>
+        ))
+      }
+    </dl>
+    <a class="btn btn-quiet cut-outline" href={x.href}><span>Follow on X for the first look</span></a>
+  </div>
+</div>
+
+<style>
+  .tease {
+    display: grid;
+    grid-template-columns: minmax(0, 19rem) minmax(0, 1fr);
+    gap: 2rem clamp(1.5rem, 4vw, 4rem);
+    align-items: stretch;
+  }
+  .tease-block {
+    --cut: 28px;
+    display: grid;
+    place-items: center;
+    min-height: 15rem;
+    background: var(--paper);
+    color: var(--ink);
+  }
+  .tease-block span {
+    font-size: clamp(5.5rem, 12vw, 9rem);
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .tease-copy {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 1rem;
+    max-width: 38rem;
+  }
+  .tease-line {
+    font-size: clamp(1.625rem, 3.2vw, 2.5rem);
+    line-height: 1.02;
+  }
+  .tease-facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 2rem;
+    margin: 0.25rem 0 0.5rem;
+  }
+  .tease-facts div {
+    display: flex;
+    gap: 0.6rem;
+  }
+  .tease-facts dt {
+    color: var(--mist);
+  }
+  .tease-facts dd {
+    font-weight: 600;
+  }
+  @media (max-width: 720px) {
+    .tease {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .tease-block {
+      --cut: 20px;
+      min-height: 10.5rem;
+    }
+  }
+</style>
