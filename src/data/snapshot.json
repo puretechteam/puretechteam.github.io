@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-11-12T16:35:39.742Z",
+  "fetchedAt": "2026-11-15T10:38:19.152Z",
   "repos": {
     "Latheport": {
       "description": "Convert, compress, edit or extract any file. Drop it in, pick a format, done. Was ConvertAll.",
@@ -277,8 +277,25 @@
       "url": "https://github.com/puretechteam/childlock",
       "language": "C#",
       "license": "MIT",
-      "pushedAt": "2026-10-31T07:19:17Z",
+      "pushedAt": "2026-11-15T09:44:49Z",
       "releases": [
+        {
+          "tag": "v0.3.0",
+          "name": "ChildLock v0.3.0",
+          "url": "https://github.com/puretechteam/childlock/releases/tag/v0.3.0",
+          "publishedAt": "2026-11-15T09:46:11Z",
+          "prerelease": false,
+          "draft": false,
+          "body": "New look:\n\n- Settings is rebuilt in the Windows 11 style: a header, one rounded card per group, on/off switches, and a Save button in the accent color. It follows light and dark, fits small laptop screens (the cards scroll), and the mouse wheel scrolls the page instead of changing a number box you happen to point at.\n- New icon: a white padlock on a rounded tile, blue when ready, red when locked and grey when paused, with an open shackle when unlocked. It is drawn for each size, so it stays clear in the tray, where the old glyph washed out at 16 px.\n- The badge has smooth corners, a thin light edge that keeps it readable on dark video, and a soft shadow. It fades in, and fades out when you unlock.\n- Cleaning mode shows a padlock inside a ring that empties as the time runs out.\n- The unlock word prompt matches the new look.\n\nFixed:\n\n- Keys still held when ChildLock unlocks no longer reach the app that has focus. After holding the hotkey to unlock, or while the last letter of the word was still down, 0.2.0 let those keys through as soon as it unlocked; now they are swallowed until you let go. In the test that holds the hotkey, 4 key events leaked before and 0 do now.\n- **Cancel** and Esc now close Settings. In 0.2.0 only Save or the X did.\n- The first keys of a lock no longer stall for a millisecond or more. The slowest input callback went from 0.6 to 1.6 ms down to 0.26 to 0.38 ms, and the average from about 25 to about 10 microseconds.\n- A copy started with `--settings` keeps its toast icon beside that settings file instead of in your real ChildLock folder.\n\nNumbers (0.2.0 to 0.3.0, same PC, measured back to back): exe 392,681 to 421,353 bytes (+7%), start unchanged (276 to 300 ms against 271 to 286 ms), private memory 11.3 to 12.1 MB, still no measurable CPU when idle. All 152 tests pass, 9 of them against the real exe with 0 key or mouse events leaking while locked.\n",
+          "assets": [
+            {
+              "name": "ChildLock.exe",
+              "size": 420841,
+              "url": "https://github.com/puretechteam/childlock/releases/download/v0.3.0/ChildLock.exe",
+              "digest": "sha256:d1598a6ebe915c07e9d7479f824125120a3916a4af972bdf3e162ee6e1a5efc6"
+            }
+          ]
+        },
         {
           "tag": "v0.2.0",
           "name": "ChildLock v0.2.0",
@@ -315,6 +332,7 @@
         }
       ],
       "tags": [
+        "v0.3.0",
         "v0.2.0",
         "v0.1.0"
       ]

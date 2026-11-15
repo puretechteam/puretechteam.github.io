@@ -71,6 +71,7 @@ export const libraries: Library[] = [
     install: 'dotnet add reference ../puretech-tray-dotnet/src/PureTech.Tray/PureTech.Tray.csproj',
     language: 'C#',
     license: 'MIT',
+    usedIn: { name: 'ChildLock', href: '/software/childlock/' },
   },
   {
     repo: 'puretech-player',

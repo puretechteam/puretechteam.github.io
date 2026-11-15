@@ -107,7 +107,7 @@ export const pages: Record<string, PageContent> = {
       'Locks every key, including Win, Alt+Tab, Alt+F4 and the media keys, plus the whole mouse or touchpad.',
       'Or locks only the keyboard, or only the mouse.',
       'Unlocks when you type your secret word, or hold the lock hotkey (Ctrl+Alt+L) for 3 seconds.',
-      'Cleaning mode blacks out every screen and locks input while you wipe the keyboard. It ends by itself after a minute.',
+      'Cleaning mode blacks out every screen and locks input while you wipe the keyboard. A ring around the padlock shows the time left, and it ends by itself after a minute.',
       'Keeps the PC awake while locked, so a video is not cut off by sleep or the screensaver.',
       'Locks from a hotkey, from the tray menu, or after a set number of idle minutes.',
     ],
@@ -122,6 +122,30 @@ export const pages: Record<string, PageContent> = {
         after: { value: 1_000_000, text: '1,000,000', note: '0 unlocks' },
         conditions: 'A test of 1,000,000 random key presses against the default unlock word, "unlock". It never unlocked.',
         source: { label: 'ChildLock README', url: `${GH}/childlock#features` },
+      },
+      {
+        label: 'Key events let through on unlock',
+        before: { value: 4, text: '4', note: 'version', ref: '0.2.0' },
+        after: { value: 0, text: '0', note: 'version', ref: '0.3.0' },
+        conditions:
+          'In the test that holds the hotkey to unlock. Keys still held at the moment ChildLock unlocks used to reach the app in front. They are now swallowed until you let go.',
+        source: { label: 'ChildLock 0.3.0 release notes', url: `${GH}/childlock/releases/tag/v0.3.0` },
+      },
+      {
+        label: 'Slowest input callback when a lock starts',
+        before: { value: 1.6, text: '1.6 ms', note: 'version', ref: '0.2.0' },
+        after: { value: 0.38, text: '0.38 ms', note: 'version', ref: '0.3.0' },
+        conditions:
+          'The slowest callback ranged from 0.6 to 1.6 ms in 0.2.0 and from 0.26 to 0.38 ms in 0.3.0. The average went from about 25 to about 10 microseconds.',
+        source: { label: 'ChildLock 0.3.0 release notes', url: `${GH}/childlock/releases/tag/v0.3.0` },
+      },
+      {
+        label: 'Size of the exe',
+        before: { value: 392.7, text: '392.7 KB', note: 'version', ref: '0.2.0' },
+        after: { value: 421.4, text: '421.4 KB', note: 'version', ref: '0.3.0' },
+        conditions:
+          'This one went up: 0.3.0 is 7% larger (392,681 to 421,353 bytes on the same PC, measured back to back). Start time is unchanged, private memory went from 11.3 to 12.1 MB, and there is still no measurable CPU when idle.',
+        source: { label: 'ChildLock 0.3.0 release notes', url: `${GH}/childlock/releases/tag/v0.3.0` },
       },
     ],
     limitsTitle: 'What it cannot block',

@@ -1,7 +1,7 @@
 ---
 import type { Product } from '../data/products.ts';
 import type { Snapshot } from '../lib/data.ts';
-import { formatBytes, formatDate, latestRelease, primaryAsset, versionFromTag } from '../lib/data.ts';
+import { byLatestRelease, formatBytes, formatDate, latestRelease, primaryAsset, versionFromTag } from '../lib/data.ts';
 
 interface Props {
   products: Product[];
@@ -9,7 +9,8 @@ interface Props {
 }
 const { products, snapshot } = Astro.props;
 
-const rows = products.map((p) => {
+// Whatever shipped most recently comes first, so the order follows the releases by itself.
+const rows = byLatestRelease(products, snapshot).map((p) => {
   const repo = snapshot.repos[p.repo];
   const release = latestRelease(repo);
   const asset = primaryAsset(release);

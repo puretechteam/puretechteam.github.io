@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.2.1 (2026-11-15)
+
+- Changed: the ChildLock page is up to date with ChildLock 0.3.0: the new Settings screenshot, the ring in
+  cleaning mode, and three figures from its release notes (key events let through on unlock, 4 to 0; slowest
+  input callback, 1.6 ms to 0.38 ms; size of the exe, 392.7 KB to 421.4 KB).
+- Changed: when a figure goes up, its bars now show that. Both bars are scaled to the larger value, so the
+  after bar is the longer one. Before, an increase drew two equal bars.
+- Added: the Libraries page says ChildLock is built on puretech-tray for .NET.
+- Changed: the software list is ordered by latest release, newest first, on the home page and the Software
+  page. It was a fixed order.
+- Fixed: releases whose notes open with a label and a list ("New look:" and then points) now get a summary
+  line in Latest releases and on the Updates page. ChildLock 0.3.0 and 0.2.0 had none.
+
 ## 0.2.0 (2026-11-14)
 
 - Added: a Games section on the home page. We have started making games, and it says so and nothing more:

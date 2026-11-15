@@ -153,7 +153,42 @@ export function releaseHeadline(release: Release): string {
     const sentence = first.match(/^.{20,}?[.!?](?=\s|$)/)?.[0] ?? first;
     return sentence.length <= 180 ? sentence : first.slice(0, 177).trimEnd() + '...';
   }
+  // Notes that open with a label and a list ("New look:" then points): the label and
+  // the first point, up to its first full stop or colon, say what the release is about.
+  const second = opening[1] ?? '';
+  if (first.endsWith(':') && first.length <= 40 && /^[-*]\s/.test(second)) {
+    const point = plainText(second.replace(/^[-*]\s+/, ''));
+    const stop = point.search(/[.:](?:\s|$)/);
+    const lead = (stop > 0 ? point.slice(0, stop) : point).trim();
+    if (lead) return clip(`${first} ${lead}`, 120);
+  }
   return release.name ?? release.tag;
+}
+
+/** Markdown emphasis, code marks and links removed, leaving the words. */
+function plainText(markdown: string): string {
+  return markdown
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/\*\*|`/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** Cuts at a word boundary and marks the cut, when the text is longer than the limit. */
+function clip(text: string, limit: number): string {
+  if (text.length <= limit) return text;
+  const cut = text.slice(0, limit - 3);
+  return cut.slice(0, cut.lastIndexOf(' ')).trimEnd() + '...';
+}
+
+/**
+ * Most recently released first. Entries with no release go last, and ties keep the order they were given in.
+ */
+export function byLatestRelease<T extends { repo: string }>(items: T[], snapshot: Snapshot): T[] {
+  return items
+    .map((item, index) => ({ item, index, at: latestRelease(snapshot.repos[item.repo])?.publishedAt ?? '' }))
+    .sort((a, b) => (a.at === b.at ? a.index - b.index : a.at < b.at ? 1 : -1))
+    .map((entry) => entry.item);
 }
 
 /** The headline without a leading "Name 1.2.3," so it can sit beside the name and version. */
@@ -184,6 +219,17 @@ export function liveDownload(repo: RepoSnapshot | undefined): { value: number; t
   const asset = primaryAsset(release);
   if (!release || !asset) return null;
   return { value: asset.size / 1_000_000, text: formatBytes(asset.size), note: 'version', ref: versionFromTag(release.tag) };
+}
+
+/**
+ * Widths for a before bar and an after bar, as whole percentages of the larger value.
+ * A figure that went up gets the longer after bar, and a zero gets no bar at all.
+ */
+export function barWidths(before: number, after: number): { before: number; after: number } {
+  const max = Math.max(before, after);
+  if (max <= 0) return { before: 0, after: 0 };
+  const width = (v: number) => (v <= 0 ? 0 : Math.max(1, Math.round((v / max) * 100)));
+  return { before: width(before), after: width(after) };
 }
 
 /** Share of the "before" value that the "after" value takes, as a whole percentage (1 to 100). */

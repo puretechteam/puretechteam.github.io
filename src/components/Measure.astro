@@ -1,5 +1,5 @@
 ---
-import { ratioPercent } from '../lib/data.ts';
+import { barWidths } from '../lib/data.ts';
 
 interface Value {
   value: number;
@@ -16,7 +16,7 @@ interface Props {
   source: { label: string; url: string };
 }
 const { label, product, before, after, conditions, source } = Astro.props;
-const pct = before ? ratioPercent(before.value, after.value) : null;
+const widths = before ? barWidths(before.value, after.value) : null;
 ---
 
 <div class="measure">
@@ -31,8 +31,8 @@ const pct = before ? ratioPercent(before.value, after.value) : null;
           <span class="measure-after display">{after.text}</span>
         </p>
         <div class="bars" aria-hidden="true">
-          <div class="bar bar-before" />
-          <div class="bar bar-after" style={`width:${pct}%`} />
+          <div class="bar bar-before" style={`width:${widths!.before}%`} />
+          <div class="bar bar-after" style={`width:${widths!.after}%`} />
         </div>
         <p class="measure-notes mono">
           <span>

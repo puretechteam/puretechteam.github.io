@@ -2,6 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
+  barWidths,
+  byLatestRelease,
   compareVersions,
   formatBytes,
   formatDate,
@@ -116,7 +118,7 @@ test('releaseHeadline drops the heading marks and the date', () => {
   assert.equal(releaseHeadline(rel({ body: '### 2026-11-12: Latheport 1.5.0, an editor\n\ntext' })), 'Latheport 1.5.0, an editor');
   assert.equal(releaseHeadline(rel({ body: '- a list', name: 'ConvertAll 1.2.0' })), 'ConvertAll 1.2.0');
   assert.equal(releaseHeadline(rel({ body: '' })), 'v1.0.0');
-  assert.equal(releaseHeadline(rel({ body: 'New:\n\n- a thing', name: 'App 0.2.0' })), 'App 0.2.0');
+  assert.equal(releaseHeadline(rel({ body: 'New:\n\n![a picture](x.png)', name: 'App 0.2.0' })), 'App 0.2.0');
   assert.equal(
     releaseHeadline(rel({ body: '**Download:** `App.zip` below.\n\n### 2026-11-12: App 1.5.0, an editor\n\ntext' })),
     'App 1.5.0, an editor',
@@ -139,6 +141,46 @@ test('releaseSummary drops the leading name and version', () => {
   assert.equal(releaseSummary(rel({ body: '## FrameKeep 3.1.1: Recordings fix' })), 'Recordings fix');
   assert.equal(releaseSummary(rel({ body: '# V2.1.0 Changelog' })), '');
   assert.equal(releaseSummary(rel({ body: 'Licensed under GPLv3 - see LICENSE file for details' })), '');
+});
+
+test('notes that open with a label and a list get the label and the first point', () => {
+  const body = 'New look:\n\n- Settings is rebuilt in the Windows 11 style: a header, one card per group.\n- New icon.\n\nFixed:\n\n- A thing.';
+  assert.equal(releaseHeadline(rel({ body })), 'New look: Settings is rebuilt in the Windows 11 style');
+  assert.equal(releaseSummary(rel({ body })), 'New look: Settings is rebuilt in the Windows 11 style');
+  assert.equal(
+    releaseSummary(rel({ body: 'New:\n\n- Lock only the keyboard, from the tray (**Lock only**) or the [hotkey](https://example.test). More.' })),
+    'New: Lock only the keyboard, from the tray (Lock only) or the hotkey',
+  );
+  const long = 'New:\n- ' + 'word '.repeat(40) + 'end';
+  const clipped = releaseHeadline(rel({ body: long }));
+  assert.ok(clipped.length <= 120 && clipped.endsWith('...'), clipped);
+  assert.equal(releaseHeadline(rel({ body: 'New:\n\nplain text, not a list', name: 'App 1.0.0' })), 'App 1.0.0');
+});
+
+test('byLatestRelease puts the newest release first and unreleased entries last', () => {
+  const repo = (date: string | null) => ({
+    description: null,
+    url: '',
+    language: null,
+    license: null,
+    pushedAt: '',
+    releases: date ? [rel({ publishedAt: date })] : [],
+  });
+  const snap = {
+    fetchedAt: '',
+    pulls: [],
+    repos: { a: repo('2026-10-31T00:00:00Z'), b: repo(null), c: repo('2026-11-15T00:00:00Z'), d: repo('2026-10-31T00:00:00Z') },
+  };
+  const order = byLatestRelease([{ repo: 'a' }, { repo: 'b' }, { repo: 'c' }, { repo: 'd' }], snap).map((x) => x.repo);
+  assert.deepEqual(order, ['c', 'a', 'd', 'b']);
+});
+
+test('barWidths scales both bars to the larger value', () => {
+  assert.deepEqual(barWidths(68, 38), { before: 100, after: 56 });
+  assert.deepEqual(barWidths(392.7, 421.4), { before: 93, after: 100 });
+  assert.deepEqual(barWidths(4, 0), { before: 100, after: 0 });
+  assert.deepEqual(barWidths(1000, 1), { before: 100, after: 1 });
+  assert.deepEqual(barWidths(0, 0), { before: 0, after: 0 });
 });
 
 test('ratioPercent stays between 1 and 100', () => {
