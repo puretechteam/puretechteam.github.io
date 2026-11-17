@@ -1,6 +1,6 @@
 {
   "name": "puretech-website",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "description": "The official Pure Tech website",
@@ -10,6 +10,7 @@
     "build": "node scripts/astro.mjs build && node scripts/measure-pages.mjs",
     "preview": "node scripts/astro.mjs preview",
     "snapshot": "node scripts/fetch-github.mjs",
+    "posts": "node scripts/fetch-x.mjs",
     "test": "node --test",
     "check-links": "node scripts/check-links.mjs"
   },

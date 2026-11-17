@@ -1,0 +1,124 @@
+---
+// The newest posts from the X account, set in the site's own type. The text was copied in at
+// build time (scripts/fetch-x.mjs), so this loads nothing from X and sets no cookies.
+import postsJson from '../data/x-posts.json';
+import { formatDate } from '../lib/data.ts';
+
+interface Post {
+  id: string;
+  url: string;
+  postedAt: string;
+  text: string;
+  media: boolean;
+  lang: string | null;
+}
+interface Props {
+  limit?: number;
+  /** Cards side by side, or a plain list for a narrow column. */
+  variant?: 'cards' | 'list';
+}
+const { limit = 3, variant = 'cards' } = Astro.props;
+
+const posts = [...(postsJson.posts as Post[])].sort((a, b) => b.postedAt.localeCompare(a.postedAt)).slice(0, limit);
+
+// A link ends before trailing punctuation, so "see example.com." keeps its full stop outside the link.
+const LINK = /(https?:\/\/\S+?)(?=[.,;:!?)\]]*(?:\s|$))/;
+const paragraphs = (text: string) => text.split(/\n{2,}/).map((p) => p.split('\n').map((line) => line.split(LINK)));
+const shown = (url: string) => url.replace(/^https?:\/\/(?:www\.)?/, '').replace(/\/$/, '');
+---
+
+<ol class:list={['posts', variant]}>
+  {
+    posts.map((p) => (
+      <li class:list={['post', { 'cut-outline': variant === 'cards' }]}>
+        <div class="post-text" lang={p.lang ?? undefined}>
+          {paragraphs(p.text).map((lines) => (
+            <p>
+              {lines.map((parts, i) => (
+                <>
+                  {i > 0 && <br />}
+                  {parts.map((part, j) =>
+                    j % 2 === 1 ? (
+                      <a class="link" href={part}>
+                        {shown(part)}
+                      </a>
+                    ) : (
+                      part
+                    ),
+                  )}
+                </>
+              ))}
+            </p>
+          ))}
+        </div>
+        <p class="post-meta mono">
+          <time datetime={p.postedAt}>{formatDate(p.postedAt)}</time>
+          {p.media && (
+            <span>
+              + media<span class="sr-only"> (a picture or video, on X)</span>
+            </span>
+          )}
+          <a class="link post-open" href={p.url}>
+            Open on X<span class="sr-only">, post of {formatDate(p.postedAt)}</span>
+          </a>
+        </p>
+      </li>
+    ))
+  }
+</ol>
+
+<style>
+  .posts {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+    --cut: 14px;
+  }
+  .post {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 1.25rem 1.25rem 1.3rem;
+  }
+  .post-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    font-size: 0.9375rem;
+    line-height: 1.55;
+    color: var(--mist);
+  }
+  .post-text p:first-child {
+    color: var(--paper);
+  }
+  .post-text a {
+    overflow-wrap: anywhere;
+  }
+  .post-meta {
+    margin-top: auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+    color: var(--mist);
+  }
+  .post-open {
+    margin-left: auto;
+  }
+  .posts.list {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+  .list .post {
+    gap: 0.9rem;
+    padding: 0 0 1.1rem;
+  }
+  .list .post + .post {
+    padding-top: 1.1rem;
+    border-top: 1px solid var(--line);
+  }
+  @media (max-width: 960px) {
+    .posts {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>

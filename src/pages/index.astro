@@ -6,11 +6,27 @@ import Ledger from '../components/Ledger.astro';
 import ProductRows from '../components/ProductRows.astro';
 import GamesTeaser from '../components/GamesTeaser.astro';
 import Measure from '../components/Measure.astro';
+import XPosts from '../components/XPosts.astro';
+import AppScan from '../components/AppScan.astro';
 import snapshotJson from '../data/snapshot.json';
+import xPosts from '../data/x-posts.json';
+import { X_HANDLE } from '../data/x.mjs';
+import { external } from '../data/nav.ts';
 import { products, ledger, measures, parts } from '../data/products.ts';
 import { OWNER, SOFTWARE_REPOS } from '../data/roster.mjs';
 import type { Snapshot } from '../lib/data.ts';
-import { formatDate, isVersionTag, liveDownload, releaseFeed, releaseSummary, upstreamPulls, versionFromTag } from '../lib/data.ts';
+import {
+  formatBytes,
+  formatDate,
+  isVersionTag,
+  latestRelease,
+  liveDownload,
+  primaryAsset,
+  releaseFeed,
+  releaseSummary,
+  upstreamPulls,
+  versionFromTag,
+} from '../lib/data.ts';
 
 const snapshot = snapshotJson as Snapshot;
 const latheport = snapshot.repos.Latheport;
@@ -21,6 +37,29 @@ const updates = releaseFeed(snapshot, SOFTWARE_REPOS)
 const live = liveDownload(latheport);
 const shownMeasures = measures.map((m) => (m.id === 'download' && live ? { ...m, after: live } : m));
 const nameOf = (repo: string) => products.find((p) => p.repo === repo)?.name ?? repo;
+const xLink = external.find((e) => e.label === 'X')!.href;
+// The newest release, so the first screen has something current to click.
+const newest = updates[0]
+  ? (() => {
+      const product = products.find((p) => p.repo === updates[0].repo);
+      return {
+        label: `${nameOf(updates[0].repo)} ${versionFromTag(updates[0].release.tag)}`,
+        date: formatDate(updates[0].release.publishedAt),
+        href: product?.page ? `/software/${product.slug}/` : updates[0].release.url,
+      };
+    })()
+  : null;
+const upstreamShown = pulls.slice(0, 3);
+// For scale beside the app check: our smallest current download.
+const smallest = products
+  .map((p) => {
+    const release = latestRelease(snapshot.repos[p.repo]);
+    const asset = primaryAsset(release);
+    return release && asset ? { name: p.name, version: versionFromTag(release.tag), size: asset.size } : null;
+  })
+  .filter((d) => d !== null)
+  .sort((a, b) => a.size - b.size)[0];
+const scale = smallest ? `${smallest.name} ${smallest.version} is a ${formatBytes(smallest.size)} download.` : null;
 ---
 
 <Base
@@ -35,6 +74,19 @@ const nameOf = (repo: string) => products.find((p) => p.repo === repo)?.name ?? 
       Independent software for Windows. It runs on your own PC, keeps your files there, and every claim comes with a
       number.
     </p>
+    <div class="hero-actions">
+      <a class="btn btn-primary cut" href="#software">See the software</a>
+      <a class="btn cut hero-scan" href="#scan" data-scan-open>Look inside an app</a>
+      {
+        newest && (
+          <a class="hero-newest mono" href={newest.href}>
+            Newest: <b>{newest.label}</b>, {newest.date}
+          </a>
+        )
+      }
+    </div>
+
+    <AppScan scale={scale} />
 
     <div class="removed">
       <p class="removed-intro">
@@ -88,7 +140,7 @@ const nameOf = (repo: string) => products.find((p) => p.repo === repo)?.name ?? 
   <Section num="05" title="Merged upstream" id="upstream">
     <ul class="plain-list">
       {
-        pulls.map((p) => (
+        upstreamShown.map((p) => (
           <li class="pull">
             <span class="mono pull-repo">{p.repo}</span>
             <a href={p.url}>{p.title}</a>
@@ -98,27 +150,44 @@ const nameOf = (repo: string) => products.find((p) => p.repo === repo)?.name ?? 
       }
     </ul>
     <p class="mono muted list-note">
-      Pull requests merged into projects we do not own. <a class="link" href="/upstream/">All of them</a>
+      Pull requests merged into projects we do not own. <a class="link" href="/upstream/">All {pulls.length}</a>
     </p>
   </Section>
 
-  <Section num="06" title="Latest releases" id="updates">
-    <ul class="plain-list">
+  <Section num="06" title="Lately" id="updates">
+    <div class="lately">
+      <div>
+        <h3 class="mono lately-head">Releases</h3>
+        <ul class="plain-list">
+          {
+            updates.map(({ repo, release }) => (
+              <li class="update">
+                <span class="mono muted">{formatDate(release.publishedAt)}</span>
+                <a href={release.url}>
+                  <strong>
+                    {nameOf(repo)} {versionFromTag(release.tag)}
+                  </strong>
+                </a>
+                <span class="muted update-line">{releaseSummary(release)}</span>
+              </li>
+            ))
+          }
+        </ul>
+        <p class="mono muted list-note"><a class="link" href="/updates/">Every release</a></p>
+      </div>
       {
-        updates.map(({ repo, release }) => (
-          <li class="update">
-            <span class="mono muted">{formatDate(release.publishedAt)}</span>
-            <a href={release.url}>
-              <strong>
-                {nameOf(repo)} {versionFromTag(release.tag)}
-              </strong>
-            </a>
-            <span class="muted update-line">{releaseSummary(release)}</span>
-          </li>
-        ))
+        xPosts.posts.length > 0 && (
+          <div id="x">
+            <h3 class="mono lately-head">On X</h3>
+            <XPosts limit={2} variant="list" />
+            <p class="mono muted list-note">
+              Copied from <a class="link" href={xLink}>@{X_HANDLE}</a> when the site is built, so this page loads
+              nothing from X.
+            </p>
+          </div>
+        )
       }
-    </ul>
-    <p class="mono muted list-note"><a class="link" href="/updates/">Every release</a></p>
+    </div>
   </Section>
 </Base>
 
@@ -148,8 +217,41 @@ const nameOf = (repo: string) => products.find((p) => p.repo === repo)?.name ?? 
   .lede {
     margin-top: clamp(1.25rem, 3vw, 2.25rem);
   }
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1.5rem;
+    margin-top: clamp(1.5rem, 3vw, 2rem);
+  }
+  /* Opens the app check below. White on dark (dark on light), so it stands apart from the green button. */
+  .hero-scan {
+    background: var(--paper);
+    color: var(--ink);
+  }
+  .hero-scan:hover {
+    background: var(--mist);
+  }
+  :global(.is-phone) .hero-scan {
+    display: none;
+  }
+  .hero-newest {
+    color: var(--mist);
+    text-decoration: none;
+  }
+  .hero-newest b {
+    color: var(--paper);
+    font-weight: 600;
+  }
+  .hero-newest:hover b {
+    text-decoration: underline;
+  }
+  /* The hero list is smaller than before, so the software list starts nearer the top. */
+  .removed :global(.ledger .strike) {
+    font-size: clamp(1.25rem, 2.3vw, 1.875rem);
+  }
   .removed {
-    margin-top: clamp(2.5rem, 6vw, 4.5rem);
+    margin-top: clamp(2rem, 4.5vw, 3.5rem);
   }
   .removed-intro {
     max-width: 40rem;
@@ -239,7 +341,27 @@ const nameOf = (repo: string) => products.find((p) => p.repo === repo)?.name ?? 
     align-items: baseline;
   }
   .update {
-    grid-template-columns: minmax(0, 7rem) minmax(0, 14rem) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 6.5rem) minmax(0, 1fr);
+  }
+  .update .update-line {
+    grid-column: 2;
+  }
+  .lately {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2.5rem clamp(2rem, 5vw, 4rem);
+  }
+  .lately-head {
+    color: var(--mist);
+    font-weight: 400;
+    margin-bottom: 0.9rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--line-strong);
+  }
+  @media (max-width: 960px) {
+    .lately {
+      grid-template-columns: minmax(0, 1fr);
+    }
   }
   .pull-repo {
     color: var(--blue);
@@ -255,6 +377,9 @@ const nameOf = (repo: string) => products.find((p) => p.repo === repo)?.name ?? 
     .pull,
     .update {
       grid-template-columns: minmax(0, 1fr);
+    }
+    .update .update-line {
+      grid-column: auto;
     }
   }
 </style>

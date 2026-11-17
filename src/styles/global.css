@@ -242,6 +242,9 @@ img {
   text-decoration: none;
   white-space: nowrap;
   cursor: pointer;
+  /* A <button> brings the browser's own border and fill; a link does not. */
+  border: 0;
+  background: transparent;
 }
 .btn-primary {
   background: var(--green);

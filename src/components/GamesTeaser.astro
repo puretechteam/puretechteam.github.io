@@ -1,23 +1,45 @@
 ---
-// A teaser, and nothing more than is true: games are being made, and
-// there is nothing to show yet. The block is the uncut one from the
-// load-up screen. Every unknown is marked ?? instead of being guessed at.
+// A teaser, and nothing more than is true: games are being made. Until there is a video, the
+// block from the load-up screen stands in for it. Every unknown is marked ?? instead of being guessed at.
 import { external } from '../data/nav.ts';
+import { gamesVideo as video } from '../data/games.ts';
 
 const x = external.find((e) => e.label === 'X')!;
 const unknowns = ['Title', 'Platform', 'Release'];
 ---
 
-<div class="tease">
-  <div class="tease-block cut" aria-hidden="true">
-    <span class="display">??</span>
-  </div>
+<div class:list={['tease', { 'has-video': video }]}>
+  {
+    video ? (
+      <figure class="tease-video cut">
+        {/* preload="none": the page stays light, and the video loads only for someone who presses play. */}
+        <video
+          controls
+          preload="none"
+          playsinline
+          poster={video.poster}
+          width={video.width}
+          height={video.height}
+          aria-label={video.label}
+        >
+          <source src={video.src} type="video/mp4" />
+        </video>
+      </figure>
+    ) : (
+      <div class="tease-block cut" aria-hidden="true">
+        <span class="display">??</span>
+      </div>
+    )
+  }
 
   <div class="tease-copy">
     <p class="tease-line display">We have started making games.</p>
     <p class="muted">
-      No titles, no dates and no screenshots yet. This block is still being cut. When there is something real to show,
-      it goes here first.
+      {
+        video
+          ? 'No title and no date yet. This is the first look.'
+          : 'No titles, no dates and no screenshots yet. This block is still being cut. When there is something real to show, it goes here first.'
+      }
     </p>
     <dl class="tease-facts mono">
       {
@@ -29,7 +51,9 @@ const unknowns = ['Title', 'Platform', 'Release'];
         ))
       }
     </dl>
-    <a class="btn btn-quiet cut-outline" href={x.href}><span>Follow on X for the first look</span></a>
+    <a class="btn btn-quiet cut-outline" href={x.href}>
+      <span>{video ? 'Follow on X for more' : 'Follow on X for the first look'}</span>
+    </a>
   </div>
 </div>
 
@@ -39,6 +63,9 @@ const unknowns = ['Title', 'Platform', 'Release'];
     grid-template-columns: minmax(0, 19rem) minmax(0, 1fr);
     gap: 2rem clamp(1.5rem, 4vw, 4rem);
     align-items: stretch;
+  }
+  .tease.has-video {
+    grid-template-columns: minmax(0, 1fr);
   }
   .tease-block {
     --cut: 28px;
@@ -52,6 +79,16 @@ const unknowns = ['Title', 'Platform', 'Release'];
     font-size: clamp(5.5rem, 12vw, 9rem);
     letter-spacing: -0.02em;
     line-height: 1;
+  }
+  /* A small cut, so the corner never reaches the player's own buttons. */
+  .tease-video {
+    --cut: 14px;
+    background: var(--graphite);
+  }
+  .tease-video video {
+    display: block;
+    width: 100%;
+    height: auto;
   }
   .tease-copy {
     display: flex;

@@ -42,6 +42,17 @@ export function resourcesOf(html) {
   }
   for (const m of html.matchAll(/<script\b[^>]*\bsrc=["']([^"']+)["']/gi)) urls.add(m[1]);
   for (const m of html.matchAll(/<img\b[^>]*\bsrc=["']([^"']+)["']/gi)) urls.add(m[1]);
+  // A video's poster loads with the page. With preload="none" the video itself loads only when someone
+  // presses play; with any other preload it is counted in full, which overstates the weight rather than hiding it.
+  for (const m of html.matchAll(/<video\b([^>]*)>([\s\S]*?)<\/video>/gi)) {
+    const [, attrs, inner] = m;
+    const poster = attrs.match(/\bposter=["']([^"']+)["']/i);
+    if (poster) urls.add(poster[1]);
+    if (/\bpreload=["']?none\b/i.test(attrs)) continue;
+    const src = attrs.match(/\bsrc=["']([^"']+)["']/i);
+    if (src) urls.add(src[1]);
+    for (const s of inner.matchAll(/<source\b[^>]*\bsrc=["']([^"']+)["']/gi)) urls.add(s[1]);
+  }
   return [...urls];
 }
 

@@ -4,6 +4,8 @@ import { readFileSync } from 'node:fs';
 import {
   barWidths,
   byLatestRelease,
+  changePercent,
+  isWorse,
   compareVersions,
   formatBytes,
   formatDate,
@@ -26,6 +28,9 @@ import { ledger, measures, parts, products } from '../src/data/products.ts';
 import { LIBRARY_REPOS, OWNER, ROSTER_REPOS, SOFTWARE_REPOS } from '../src/data/roster.mjs';
 import { isThirdParty, resourcesOf } from '../scripts/measure-pages.mjs';
 import { ATTRIBUTION_LINE, cleanBody } from '../scripts/clean.mjs';
+import { decodeEntities, isOwnPost, postedAtFromId, postFromOembed, shortLinks, stripEmoji } from '../scripts/x-oembed.mjs';
+import { X_HANDLE, X_POSTS } from '../src/data/x.mjs';
+import { isOutside, markOutsideLinks } from '../src/lib/links.ts';
 
 const snapshot: Snapshot = JSON.parse(readFileSync(new URL('../src/data/snapshot.json', import.meta.url), 'utf8'));
 
@@ -302,4 +307,127 @@ test('isThirdParty spots absolute and protocol-relative URLs', () => {
   assert.equal(isThirdParty('https://cdn.example.test/x.js'), true);
   assert.equal(isThirdParty('//cdn.example.test/x.js'), true);
   assert.equal(isThirdParty('/_astro/x.js'), false);
+});
+
+test('a video counts its poster, and the video itself only when it is not preload="none"', () => {
+  const lazy = `<video controls preload="none" poster="/media/v.webp"><source src="/media/v.mp4" type="video/mp4"></video>`;
+  assert.deepEqual(resourcesOf(lazy), ['/media/v.webp']);
+  const eager = `<video controls preload="auto" poster="/media/v.webp" src="/media/a.mp4"><source src="/media/v.mp4"></video>`;
+  assert.deepEqual(resourcesOf(eager).sort(), ['/media/a.mp4', '/media/v.mp4', '/media/v.webp']);
+});
+
+// ---- posts from X
+
+const oembed = (p: string, author = 'https://x.com/puretechteam') => ({
+  author_url: author,
+  html: `<blockquote class="twitter-tweet" data-dnt="true">${p}&mdash; Pure Tech (@puretechteam) <a href="https://x.com/puretechteam/status/1">November 15, 2026</a></blockquote>\n`,
+});
+
+test('postFromOembed keeps the words and paragraphs, drops the media link and spaces a glued link', () => {
+  const post = postFromOembed(
+    oembed(
+      '<p lang="en" dir="ltr">ChildLock 0.3 got a makeover.<br><br>It&#39;s free for Windows:<a href="https://t.co/JTQPS5rDrP">https://t.co/JTQPS5rDrP</a> <a href="https://t.co/3H8WutmodX">pic.twitter.com/3H8WutmodX</a></p>',
+    ),
+  );
+  assert.deepEqual(post, {
+    text: "ChildLock 0.3 got a makeover.\n\nIt's free for Windows: https://t.co/JTQPS5rDrP",
+    media: true,
+    lang: 'en',
+  });
+  assert.deepEqual(shortLinks(post.text), ['https://t.co/JTQPS5rDrP']);
+});
+
+test('postFromOembed drops emoji and the hashtags a post ends on, and keeps a hashtag inside a sentence', () => {
+  const post = postFromOembed(
+    oembed(
+      '<p lang="en" dir="ltr">🚀 We ship <a href="https://x.com/hashtag/Windows">#Windows</a> tools.<br><br>Built to last. ♻️<a href="https://x.com/hashtag/Tech">#Tech</a> <a href="https://x.com/hashtag/RightToRepair">#RightToRepair</a></p>',
+    ),
+  );
+  assert.equal(post.text, 'We ship #Windows tools.\n\nBuilt to last.');
+  assert.equal(post.media, false);
+});
+
+test('stripEmoji keeps typographic symbols and removes emoji, flags and joined sequences', () => {
+  assert.equal(stripEmoji('© 2026 Pure Tech™, A ↔ B'), '© 2026 Pure Tech™, A ↔ B');
+  assert.equal(stripEmoji('Locked 🔒 and ↔️ done'), 'Locked  and  done');
+  assert.equal(stripEmoji('🇺🇸 👨‍💻 ok'), '  ok');
+  assert.equal(decodeEntities('&lt;b&gt; &amp; &#39;x&#x27; &quot;'), `<b> & 'x' "`);
+});
+
+test('postedAtFromId reads the time out of an X post ID', () => {
+  // X's own page showed this post at timestamp 1794835087000 (to the second).
+  assert.equal(postedAtFromId('2122318299291672959'), '2026-11-16T13:18:07.975Z');
+});
+
+test('only posts by the account count as its own', () => {
+  assert.equal(isOwnPost({ author_url: 'https://x.com/puretechteam' }, X_HANDLE), true);
+  assert.equal(isOwnPost({ author_url: 'https://twitter.com/PureTechTeam' }, X_HANDLE), true);
+  assert.equal(isOwnPost({ author_url: 'https://x.com/puretechteamfan' }, X_HANDLE), false);
+  assert.throws(() => postFromOembed({ html: '<blockquote></blockquote>' }), /no post text/);
+});
+
+test('every stored post is one the site lists, by the account, with clean text and its real time', () => {
+  const stored: { id: string; url: string; postedAt: string; text: string }[] = JSON.parse(
+    readFileSync(new URL('../src/data/x-posts.json', import.meta.url), 'utf8'),
+  ).posts;
+  assert.ok(stored.length > 0);
+  for (const p of stored) {
+    assert.ok(X_POSTS.includes(p.id), `${p.id} is stored but not listed in src/data/x.mjs`);
+    assert.equal(p.url, `https://x.com/${X_HANDLE}/status/${p.id}`);
+    assert.equal(p.postedAt, postedAtFromId(p.id));
+    assert.equal(stripEmoji(p.text), p.text, `${p.id} still has an emoji`);
+    assert.deepEqual(shortLinks(p.text), [], `${p.id} still sends readers through t.co`);
+  }
+});
+
+// ---- links that leave the site
+
+test('outside links open in a new tab, and internal links, downloads and set targets are left alone', () => {
+  const html = [
+    '<body>',
+    '<a href="https://github.com/puretechteam">GitHub</a>',
+    '<a href="/software/">Software</a><a href="#main">Skip</a><a href="mailto:x@example.test">Mail</a>',
+    '<a href="https://puretechteam.github.io/about/">About</a>',
+    '<a class="btn" href="https://github.com/puretechteam/childlock/releases/download/v0.3.0/ChildLock.exe" data-dl>Download</a>',
+    '<a href="https://example.test/file.zip" download>File</a>',
+    '<a href="https://x.com/puretechteam" target="_self">X</a>',
+    '</body>',
+  ].join('');
+  const out = markOutsideLinks(html, 'puretechteam.github.io');
+  const tags = [...out.matchAll(/<a\b[^>]*>/g)].map((m) => m[0]);
+  assert.equal(tags[0], '<a href="https://github.com/puretechteam" rel="noopener" aria-describedby="pt-new-tab" target="_blank">');
+  for (const tag of tags.slice(1)) assert.doesNotMatch(tag, /_blank|pt-new-tab/, tag);
+  assert.equal(out.match(/id="pt-new-tab"/g)?.length, 1);
+  assert.match(out, /<span id="pt-new-tab" hidden>Opens in a new tab<\/span><\/body>/);
+});
+
+test('a marked link keeps the rel and description it already had, and a page with no outside links gets no note', () => {
+  const out = markOutsideLinks('<a href="//cdn.example.test/" rel="me" aria-describedby="hint">x</a></body>', 'puretechteam.github.io');
+  assert.match(out, /rel="me noopener"/);
+  assert.match(out, /aria-describedby="hint pt-new-tab"/);
+  const inside = '<a href="/updates/">Updates</a></body>';
+  assert.equal(markOutsideLinks(inside, 'puretechteam.github.io'), inside);
+  assert.equal(isOutside('https://PURETECHTEAM.github.io/x/', 'puretechteam.github.io'), false);
+});
+
+test('when the opening says nothing, the summary comes from the first line further down that does', () => {
+  // An image, then prose with bold words in it.
+  assert.equal(releaseSummary(rel({ body: '![App](banner.png)\n\nFirst release. Download **App.exe** below.' })), 'First release.');
+  // A download line and a heading with only the name, then a list.
+  const body = '**Download:** `App.zip` below.\n### 2026-10-30: App 1.2.0\n- **Changed: Tool is no longer needed.** More words.';
+  assert.equal(releaseSummary(rel({ body })), 'Changed: Tool is no longer needed');
+  // A license line and a bare changelog heading, then a list.
+  assert.equal(releaseSummary(rel({ body: 'Licensed under GPLv3\nv2.0.0 Changelog\n- Fixed the start.' })), 'Fixed the start');
+  // Nothing but pointers stays empty.
+  assert.equal(releaseSummary(rel({ body: '**Full Changelog**: https://example.test/compare' })), '');
+  assert.equal(releaseSummary(rel({ body: 'What changed: [CHANGELOG.md](https://example.test)' })), '');
+});
+
+test('a worse figure is spotted in both directions, with its change', () => {
+  assert.equal(isWorse(392.7, 421.4), true);
+  assert.equal(isWorse(68, 38), false);
+  assert.equal(isWorse(27, 34, 'higher'), false);
+  assert.equal(isWorse(34, 27, 'higher'), true);
+  assert.equal(changePercent(392.7, 421.4), 7);
+  assert.equal(changePercent(0, 5), 0);
 });

@@ -10,10 +10,15 @@ import martian from '@fontsource-variable/martian-mono/files/martian-mono-latin-
 interface Props {
   title: string;
   description: string;
+  /** The preview card shown when the page is shared (public/cards, made by scripts/make-cards.mjs). */
+  card?: string;
+  cardAlt?: string;
 }
-const { title, description } = Astro.props;
+const { title, description, card = '/cards/home.png', cardAlt = 'Pure Tech: Nothing extra. Independent software for Windows.' } =
+  Astro.props;
 const fullTitle = title === 'Pure Tech' ? title : `${title} · Pure Tech`;
 const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : null;
+const cardUrl = Astro.site ? new URL(card, Astro.site).href : card;
 ---
 
 <!doctype html>
@@ -26,6 +31,14 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : nu
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Pure Tech" />
+    <meta property="og:image" content={cardUrl} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={cardAlt} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content={cardUrl} />
+    <meta name="twitter:image:alt" content={cardAlt} />
     <meta name="theme-color" content="#050607" media="(prefers-color-scheme: dark)" />
     <meta name="theme-color" content="#f4f6f5" media="(prefers-color-scheme: light)" />
     {canonical && <link rel="canonical" href={canonical} />}
@@ -34,9 +47,13 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : nu
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="preload" href={archivo} as="font" type="font/woff2" crossorigin />
     <link rel="preload" href={martian} as="font" type="font/woff2" crossorigin />
-    <!-- Decides before first paint whether to show the load-up screen: once per session, never with reduced motion. -->
+    <!-- Decides before first paint whether to show the load-up screen: once per session, never with reduced motion.
+         It also marks a phone (touch, not Windows) before first paint, so what a phone cannot use is hidden without a jump. -->
     <script is:inline>
       try {
+        if (matchMedia('(pointer: coarse)').matches && !/Windows/.test(navigator.userAgent)) {
+          document.documentElement.classList.add('is-phone');
+        }
         var forced = /[?&]intro\b/.test(location.search);
         if (
           (forced || !sessionStorage.getItem('pt-intro')) &&
@@ -58,22 +75,28 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : nu
     </main>
     <Footer />
 
-    <!-- On a phone a Windows download is no use, so the button offers to send the link instead. -->
+    <!-- On a phone a Windows download is no use, so the button offers to send the link instead. Its label, which
+         names the program, then starts with the new words on the button, so screen readers and voice control agree
+         with what is shown. -->
+
     <script is:inline>
       (() => {
-        const phone = matchMedia('(pointer: coarse)').matches && !/Windows/.test(navigator.userAgent);
-        if (!phone) return;
+        if (!document.documentElement.classList.contains('is-phone')) return;
         document.querySelectorAll('a[data-dl]').forEach((a) => {
           const direct = a.href;
           const url = new URL(a.dataset.page || location.href, location.href).href;
-          a.textContent = 'Send link to my PC';
+          const say = (t) => {
+            a.textContent = t;
+            if (a.hasAttribute('aria-label')) a.setAttribute('aria-label', `${t}: ${a.dataset.title}`);
+          };
+          say('Send link to my PC');
           a.addEventListener('click', async (e) => {
             e.preventDefault();
             try {
               if (navigator.share) await navigator.share({ title: a.dataset.title, url });
               else {
                 await navigator.clipboard.writeText(url);
-                a.textContent = 'Link copied';
+                say('Link copied');
               }
             } catch {}
           });

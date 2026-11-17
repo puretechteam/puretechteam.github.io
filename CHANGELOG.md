@@ -1,5 +1,44 @@
 # Changelog
 
+## 0.3.0 (2026-11-17)
+
+- Added: "What's in this app?" at the top of the home page, with its own "Look inside an app" button beside
+  "See the software". Drag a program's folder onto the page and it shows how much of it is the program and how
+  much is extra: a bundled web browser, runtimes, translations, codecs, updaters, debug files and licenses,
+  with every file listed. Nothing is uploaded. The page reads file names and sizes on your PC and makes 0
+  requests while it works. Copy result gives the numbers as text. On a phone it is one line, and the button is
+  not shown. The home page loads 146.6 KB (141.4 KB before) with 9.5 KB of script (1.3 KB before, budget
+  10 KB), still in 5 requests with 0 third-party. It adds 317 px on a laptop and 161 px on a phone; the "See
+  the software" button stays where it was.
+- Fixed: on a phone, the download buttons change to "Send link to my PC", but screen readers still heard
+  "Download ...". The label now starts with the words on the button. An accessibility scan in phone mode
+  found 5 such problems on the home page; it now finds 0 across all 12 pages, dark and light.
+- Added: the newest posts from @puretechteam on the home page. Their text is copied in when the site is
+  built, so the page still makes 0 third-party requests and sets no cookies. Links in the posts go straight
+  to where they point instead of through t.co. The About page says how the posts get here.
+- Added: a preview card for every page (1200 x 630), shown when a link to the site is shared on X, Discord
+  and elsewhere: one for the home page and one for each program. Before, shared links had no picture.
+- Added: a "See the software" button and the newest release in the opening screen. Both are visible without
+  scrolling, on a laptop (424 px down) and on a phone (338 px down).
+- Changed: releases and X posts now sit side by side in one "Lately" section, and Merged upstream shows the
+  3 newest of 5 with a link to all of them. Together with a smaller list of removed programs at the top, this
+  takes 403 px off the home page on a laptop and 592 px on a phone.
+- Changed: a figure that got worse is no longer drawn in green, which reads as an improvement. Its "after"
+  value and bar are white, with the change beside the label (ChildLock's exe size: +7%).
+- Changed: on a program page, a tall screenshot sits beside the text instead of below it. ChildLock's page
+  had an empty area of 644 x 758 px next to its screenshot; it is gone, and the page is 223 px shorter.
+  Wide screenshots now use the full width.
+- Fixed: 6 releases had no summary line because their notes open with an image, a download line or a bare
+  "Changelog" heading. They now get the first sentence or point after it, such as "First release." for
+  ChildLock 0.1.0. No existing summary changed.
+- Added: the Games section can show a video. It loads only when someone presses play; until then the page
+  carries only its poster. No video is set yet, so the section looks as it did.
+- Changed: every link that leaves the site opens in a new tab (232 links on 12 pages). Internal links (256)
+  and download buttons (15) work as before, so a download does not leave an empty tab behind. Screen readers
+  hear that such a link opens a new tab.
+- Changed: a page's own styles are inlined up to 10 KB (was 4 KB), so the home page still loads in 5 requests
+  with this release's additions. Without the change it would take 6.
+
 ## 0.2.1 (2026-11-15)
 
 - Changed: the ChildLock page is up to date with ChildLock 0.3.0: the new Settings screenshot, the ring in

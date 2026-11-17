@@ -21,30 +21,70 @@ const snapshot = snapshotJson as Snapshot;
 const repo = snapshot.repos[product.repo];
 const recent = repo.releases.filter((r) => !r.draft && !r.prerelease && isVersionTag(r.tag)).slice(0, 3);
 
+// A tall screenshot sits beside the text instead of below it, so it does not leave half the width empty.
+// A wide one runs the full width, up to its own size.
+const shot = content.shot.src;
+const portrait = shot.height > shot.width;
+
 // Section numbers follow whichever sections this product has.
 let n = 0;
 const num = () => String(++n).padStart(2, '0');
 ---
 
-<Base title={product.name} description={`${product.name}: ${product.tagline}`}>
-  <div class="wrap head">
-    <div>
-      <p class="mono muted crumb"><a href="/software/">Software</a> /</p>
-      <h1 class="display">{product.name}</h1>
-      <p class="lede">{content.intro}</p>
-    </div>
-    <DownloadBox name={product.name} repo={repo} install={content.install} firstRun={content.firstRun} />
-  </div>
-
-  <figure class="wrap shot">
-    <Image
-      src={content.shot.src}
-      alt={content.shot.alt}
-      widths={[640, 960, content.shot.src.width]}
-      sizes="(max-width: 78rem) 92vw, 72rem"
-      loading="eager"
-    />
-  </figure>
+<Base
+  title={product.name}
+  description={`${product.name}: ${product.tagline}`}
+  card={`/cards/${product.slug}.png`}
+  cardAlt={`${product.name}: ${product.tagline} ${product.fact ?? ''}`.trim()}
+>
+  {
+    portrait ? (
+      <div class="wrap head portrait" style={`--shot-width:${shot.width}px`}>
+        <div class="head-title">
+          <p class="mono muted crumb">
+            <a href="/software/">Software</a> /
+          </p>
+          <h1 class="display">{product.name}</h1>
+        </div>
+        <div class="head-text">
+          <p class="lede">{content.intro}</p>
+          <DownloadBox name={product.name} repo={repo} install={content.install} firstRun={content.firstRun} />
+        </div>
+        <figure class="shot-beside">
+          <Image
+            src={shot}
+            alt={content.shot.alt}
+            widths={[480, shot.width]}
+            sizes={`(max-width: 860px) 92vw, ${shot.width}px`}
+            loading="eager"
+          />
+        </figure>
+      </div>
+    ) : (
+      <>
+        <div class="wrap head">
+          <div>
+            <p class="mono muted crumb">
+              <a href="/software/">Software</a> /
+            </p>
+            <h1 class="display">{product.name}</h1>
+            <p class="lede">{content.intro}</p>
+          </div>
+          <DownloadBox name={product.name} repo={repo} install={content.install} firstRun={content.firstRun} />
+        </div>
+        <figure class="wrap shot">
+          <Image
+            src={shot}
+            alt={content.shot.alt}
+            widths={[640, 960, 1280, shot.width].filter((w, i, all) => w <= shot.width && all.indexOf(w) === i)}
+            sizes="(max-width: 78rem) 92vw, 72rem"
+            loading="eager"
+            style={`width:min(100%, ${shot.width}px)`}
+          />
+        </figure>
+      </>
+    )
+  }
 
   <Section num={num()} title="What it does" id="does">
     <ul class="plain-list does">
@@ -178,7 +218,36 @@ const num = () => String(++n).padStart(2, '0');
     padding-bottom: clamp(2.5rem, 6vw, 4.5rem);
   }
   .shot :global(img) {
-    max-width: min(100%, 60rem);
+    height: auto;
+    border: 1px solid var(--line);
+  }
+  .head.portrait {
+    grid-template-columns: minmax(0, 1fr) minmax(0, var(--shot-width));
+    grid-template-areas: 'title title' 'text shot';
+    align-items: start;
+    padding-bottom: clamp(2.5rem, 6vw, 4.5rem);
+  }
+  .head-title {
+    grid-area: title;
+  }
+  .head-text {
+    grid-area: text;
+    display: grid;
+    gap: 2rem;
+    align-content: start;
+  }
+  .head-text .lede {
+    margin-top: 0;
+  }
+  .head-text > :global(.download) {
+    max-width: 26rem;
+  }
+  .shot-beside {
+    grid-area: shot;
+  }
+  .shot-beside :global(img) {
+    width: 100%;
+    height: auto;
     border: 1px solid var(--line);
   }
   .does,
@@ -222,8 +291,10 @@ const num = () => String(++n).padStart(2, '0');
     padding-block: 0.75rem;
   }
   @media (max-width: 860px) {
-    .head {
+    .head,
+    .head.portrait {
       grid-template-columns: minmax(0, 1fr);
+      grid-template-areas: 'title' 'text' 'shot';
     }
   }
   @media (max-width: 620px) {

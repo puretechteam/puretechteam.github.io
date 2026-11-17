@@ -1,0 +1,389 @@
+---
+// "What's in this app?": drop a program's folder to see what it is made of, the program itself and what it carries
+// along. It all happens in the browser: the page reads file names and sizes, never contents, and sends nothing
+// anywhere. The sorting rules are in src/lib/appscan.ts.
+//
+// Chrome and Edge's folder picker (showDirectoryPicker) refuses Program Files and AppData, where programs live, so
+// the button uses the classic folder input instead. Dragging a folder works anywhere.
+interface Props {
+  /** One of ours, for scale: "ChildLock 0.3.0 is a 421 KB download." */
+  scale?: string | null;
+}
+const { scale } = Astro.props;
+---
+
+<section class="scan cut-outline" id="scan" aria-labelledby="scan-title" data-scan>
+  <div class="scan-inner">
+    <div>
+      <h2 id="scan-title" class="display scan-title">What's in this app?</h2>
+      <p class="scan-phone muted">On a PC, drop a program's folder here to see what is inside it.</p>
+      <p class="scan-text">
+        Some programs bring a whole web browser along, plus runtimes and dozens of languages. Drag a program's folder
+        onto this page to see how much of it is the program and how much is extra.
+      </p>
+      <p class="mono muted scan-promise">Nothing is uploaded. This page reads file names and sizes on your PC.</p>
+    </div>
+    <div class="scan-drop cut-outline">
+      <div>
+        <p class="scan-drop-head">Drop a folder here</p>
+        <p class="mono muted">or</p>
+        <button type="button" class="btn btn-primary cut" data-pick>Choose a folder</button>
+        <input type="file" webkitdirectory hidden data-input />
+        <p class="mono muted">Your browser may call it an upload. Nothing leaves your PC.</p>
+      </div>
+    </div>
+    <p class="scan-status mono" role="status" data-status></p>
+    <div class="scan-result" data-result hidden>
+      <p class="scan-name"><strong data-name></strong> <span class="mono muted" data-total></span></p>
+      <ol class="plain-list scan-groups" data-groups></ol>
+      <p class="mono muted scan-note">
+        <span data-note></span>Sorted by file name; open a line to see its files.{scale && ` For scale: ${scale}`}
+      </p>
+      <div class="scan-actions">
+        <button type="button" class="btn btn-primary cut" data-copy>Copy result</button>
+        <button type="button" class="btn btn-quiet" data-again>Try another</button>
+      </div>
+    </div>
+  </div>
+  <template data-row>
+    <li class="scan-group">
+      <details>
+        <summary>
+          <span class="scan-label"></span>
+          <span class="mono scan-size"></span>
+          <span class="mono muted scan-pct"></span>
+          <span class="scan-bar" aria-hidden="true"><span></span></span>
+        </summary>
+        <ol class="mono scan-files"></ol>
+      </details>
+    </li>
+  </template>
+</section>
+
+<script>
+  import { classify, filesCount, percent, resultText, type ScanFile } from '../lib/appscan.ts';
+  import { formatBytes } from '../lib/data.ts';
+
+  type Add = (file: ScanFile) => boolean;
+  const MAX = 100_000;
+  const SHOWN = 50;
+
+  const box = document.querySelector<HTMLElement>('[data-scan]');
+  if (box && !document.documentElement.classList.contains('is-phone')) init(box);
+
+  function init(box: HTMLElement) {
+    const q = <T extends HTMLElement = HTMLElement>(s: string) => box.querySelector(s) as T;
+    const input = q<HTMLInputElement>('[data-input]');
+    const pick = q('[data-pick]');
+    const status = q('[data-status]');
+    const result = q('[data-result]');
+    const row = q<HTMLTemplateElement>('[data-row]');
+    let text = '';
+    let busy = false;
+    let unread = 0;
+
+    const say = (s: string, quiet = false) => {
+      status.textContent = s;
+      status.classList.toggle('sr-only', quiet);
+    };
+
+    async function run(name: string, walk: (add: Add) => Promise<unknown>) {
+      if (busy) return;
+      busy = true;
+      unread = 0;
+      result.hidden = true;
+      box.scrollIntoView({ block: 'nearest' });
+      const files: ScanFile[] = [];
+      let full = false;
+      say('Reading...');
+      try {
+        await walk((f) => {
+          if (files.length >= MAX) {
+            full = true;
+            return false;
+          }
+          if (files.push(f) % 250 === 0) say(`Reading... ${filesCount(files.length)}`);
+          return true;
+        });
+        show(name, files, full);
+      } catch {
+        say('That folder could not be read.');
+      }
+      busy = false;
+    }
+
+    function show(name: string, files: ScanFile[], full: boolean) {
+      if (!files.length) return say('That folder has no files in it.');
+      const r = classify(name, files);
+      text = resultText(r);
+      const total = `${formatBytes(r.total)} in ${filesCount(r.count)}`;
+      q('[data-name]').textContent = r.name;
+      q('[data-total]').textContent = total;
+      q('[data-note]').textContent =
+        (r.engine === 'WebView2' ? 'It uses the WebView2 that comes with Windows, not a browser of its own. ' : '') +
+        (full ? `Stopped at ${filesCount(MAX)}. ` : '') +
+        (unread ? `${filesCount(unread)} could not be read. ` : '');
+      q('[data-groups]').replaceChildren(
+        ...r.groups.map((g) => {
+          const li = row.content.firstElementChild!.cloneNode(true) as HTMLElement;
+          const set = (s: string, t: string) => (li.querySelector(s)!.textContent = t);
+          li.dataset.id = g.id;
+          set('.scan-label', g.label);
+          set('.scan-size', formatBytes(g.bytes));
+          set('.scan-pct', percent(g.bytes, r.total));
+          li.querySelector<HTMLElement>('.scan-bar span')!.style.width = `${r.total ? (g.bytes / r.total) * 100 : 0}%`;
+          const list = li.querySelector('ol')!;
+          const line = (...parts: string[]) => {
+            const item = document.createElement('li');
+            for (const p of parts) item.append(Object.assign(document.createElement('span'), { textContent: p }));
+            list.append(item);
+          };
+          for (const f of g.files.slice(0, SHOWN)) line(f.path, formatBytes(f.size));
+          const rest = g.files.slice(SHOWN);
+          if (rest.length) line(`and ${rest.length.toLocaleString('en-US')} more`, formatBytes(rest.reduce((s, f) => s + f.size, 0)));
+          return li;
+        }),
+      );
+      say(`${r.name}: ${total}, sorted below.`, true);
+      result.hidden = false;
+    }
+
+    const single = (f: File) => {
+      result.hidden = true;
+      say(
+        /\.lnk$/i.test(f.name)
+          ? 'That is a shortcut. Right-click it, choose Open file location, and drag that folder here.'
+          : `${f.name}: ${formatBytes(f.size)}. Drop the whole folder to see what is inside.`,
+      );
+    };
+
+    // Dragged folders: the whole page takes the drop, so a near miss does not send the browser off to show the folder.
+    const entries = (reader: FileSystemDirectoryReader) =>
+      new Promise<FileSystemEntry[]>((ok, no) => reader.readEntries(ok, no));
+    const fileOf = (e: FileSystemEntry) =>
+      new Promise<File | null>((ok) => (e as FileSystemFileEntry).file(ok, () => (unread++, ok(null))));
+    async function walk(dir: FileSystemDirectoryEntry, base: string, add: Add): Promise<boolean> {
+      const reader = dir.createReader();
+      for (;;) {
+        const batch = await entries(reader);
+        if (!batch.length) return true;
+        const found = await Promise.all(batch.map((e) => (e.isFile ? fileOf(e) : null)));
+        for (const [i, e] of batch.entries()) {
+          const path = base + e.name;
+          if (e.isDirectory) {
+            if (!(await walk(e as FileSystemDirectoryEntry, `${path}/`, add))) return false;
+          } else if (found[i] && !add({ path, size: found[i]!.size })) return false;
+        }
+      }
+    }
+    const isFiles = (e: DragEvent) => !!e.dataTransfer?.types.includes('Files');
+    document.addEventListener('dragover', (e) => {
+      if (!isFiles(e)) return;
+      e.preventDefault();
+      box.classList.add('over');
+    });
+    document.addEventListener('dragleave', (e) => {
+      if (!e.relatedTarget) box.classList.remove('over');
+    });
+    document.addEventListener('drop', (e) => {
+      if (!isFiles(e)) return;
+      e.preventDefault();
+      box.classList.remove('over');
+      const entry = e.dataTransfer!.items[0]?.webkitGetAsEntry();
+      if (entry?.isDirectory) run(entry.name, (add) => walk(entry as FileSystemDirectoryEntry, '', add));
+      else if (e.dataTransfer!.files[0]) single(e.dataTransfer!.files[0]);
+    });
+
+    // The button: a folder input, which lists every file with its path inside the chosen folder.
+    pick.addEventListener('click', () => input.click());
+    // The "Look inside an app" button in the opening screen goes straight to the folder dialog. Without
+    // JavaScript it stays a link to this box.
+    document.querySelector('[data-scan-open]')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      input.click();
+    });
+    input.addEventListener('change', () => {
+      const list = [...(input.files ?? [])];
+      input.value = '';
+      if (!list.length) return;
+      const name = list[0].webkitRelativePath.split('/')[0];
+      run(name, async (add) => {
+        for (const f of list) if (!add({ path: f.webkitRelativePath.slice(name.length + 1), size: f.size })) return;
+      });
+    });
+
+    q('[data-copy]').addEventListener('click', async (e) => {
+      const b = e.currentTarget as HTMLElement;
+      let done = false;
+      try {
+        await navigator.clipboard.writeText(text);
+        done = true;
+      } catch {
+        // Older and embedded browsers: copy from a hidden text box.
+        const t = Object.assign(document.createElement('textarea'), { value: text });
+        t.style.cssText = 'position:fixed;opacity:0';
+        document.body.append(t);
+        t.select();
+        done = document.execCommand('copy');
+        t.remove();
+      }
+      b.textContent = done ? 'Copied' : 'Could not copy';
+      setTimeout(() => (b.textContent = 'Copy result'), 2000);
+    });
+    q('[data-again]').addEventListener('click', () => {
+      result.hidden = true;
+      say('');
+      pick.focus();
+    });
+  }
+</script>
+
+<style>
+  .scan {
+    --cut: 22px;
+    margin-top: clamp(2rem, 4vw, 3rem);
+  }
+  .scan-inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 21rem);
+    gap: 1.5rem clamp(1.5rem, 4vw, 3.5rem);
+    padding: clamp(1.25rem, 3vw, 2rem);
+  }
+  .scan-title {
+    font-size: clamp(1.75rem, 3.6vw, 2.75rem);
+    letter-spacing: -0.02em;
+  }
+  .scan-text,
+  .scan-phone {
+    margin-top: 0.9rem;
+    max-width: 36rem;
+    font-size: clamp(1rem, 1.4vw, 1.125rem);
+    line-height: 1.5;
+  }
+  .scan-promise {
+    margin-top: 0.9rem;
+  }
+  .scan-phone {
+    display: none;
+  }
+  :global(.is-phone) .scan-phone {
+    display: block;
+  }
+  :global(.is-phone) .scan-text,
+  :global(.is-phone) .scan-promise,
+  :global(.is-phone) .scan-drop {
+    display: none;
+  }
+  /* The drop area: plainly a place to put something. It lights up while a folder is dragged over the page. */
+  .scan-drop {
+    --cut: 14px;
+  }
+  .scan-drop > div {
+    display: grid;
+    justify-items: center;
+    align-content: center;
+    gap: 0.6rem;
+    height: 100%;
+    padding: 1.5rem 1.25rem;
+    text-align: center;
+  }
+  .scan-drop-head {
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+  .scan.over .scan-drop {
+    background: var(--paper);
+  }
+  .scan.over .scan-drop::before {
+    background: var(--graphite);
+  }
+  .scan-status,
+  .scan-result {
+    grid-column: 1 / -1;
+  }
+  @media (max-width: 860px) {
+    .scan-inner {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+  .scan-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 1rem;
+  }
+  .scan-status:empty {
+    display: none;
+  }
+  .scan-result {
+    display: grid;
+    gap: 0.9rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--line);
+  }
+  .scan-result[hidden] {
+    display: none;
+  }
+  .scan-name strong {
+    font-size: 1.25rem;
+    margin-right: 0.5rem;
+  }
+  .scan-group summary {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto 3rem;
+    gap: 0.4rem 1rem;
+    align-items: baseline;
+    cursor: pointer;
+    list-style: none;
+  }
+  .scan-group summary::-webkit-details-marker {
+    display: none;
+  }
+  .scan-label::before {
+    content: '+';
+    display: inline-block;
+    width: 1.1em;
+    color: var(--mist);
+    font-family: var(--mono);
+  }
+  details[open] .scan-label::before {
+    content: '-';
+  }
+  .scan-group summary:hover .scan-label {
+    text-decoration: underline;
+  }
+  .scan-pct {
+    text-align: right;
+  }
+  .scan-bar {
+    grid-column: 1 / -1;
+    height: 5px;
+    background: var(--line);
+  }
+  .scan-bar span {
+    display: block;
+    height: 100%;
+    min-width: 1px;
+    background: var(--mist);
+  }
+  .scan-group[data-id='program'] .scan-bar span {
+    background: var(--paper);
+  }
+  .scan-files {
+    display: grid;
+    gap: 0.15rem;
+    padding: 0.7rem 0 0.2rem 1.1em;
+    color: var(--mist);
+  }
+  .scan-files :global(li) {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .scan-files :global(span:first-child) {
+    overflow-wrap: anywhere;
+  }
+  .scan-files :global(span:last-child) {
+    flex: none;
+  }
+</style>

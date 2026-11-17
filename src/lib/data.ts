@@ -197,8 +197,39 @@ export function releaseSummary(release: Release): string {
     .replace(/^[^,.]*?\d+\.\d+(?:\.\d+)?(?:\s*\([^)]*\))?\s*(?:[,:]\s*|$)/, '')
     .trim();
   // A bare "V2.1.0 Changelog" or a license line says nothing about the release.
-  if (/^(?:v?\d[\d.]*\s+)?changelog\b/i.test(rest) || /^licensed under\b/i.test(rest)) return '';
-  return rest ? rest[0].toUpperCase() + rest.slice(1) : '';
+  const said = /^(?:v?\d[\d.]*\s+)?changelog\b/i.test(rest) || /^licensed under\b/i.test(rest) ? '' : rest;
+  const line = said || firstRealLine(release.body);
+  return line ? line[0].toUpperCase() + line.slice(1) : '';
+}
+
+/** Lines that open release notes without saying anything about the release itself. */
+function isPreamble(line: string): boolean {
+  return (
+    /^#{1,6}(?:\s|$)/.test(line) || // headings: by now they are known to hold only a name and version
+    /^!\[|^\[!\[|^</.test(line) || // images, badges and HTML
+    /^\*\*[^*]+(?::\*\*|\*\*:)/.test(line) || // "**Download:** ..." and "**Full Changelog**: ..."
+    /^licensed under\b/i.test(line) ||
+    /^(?:v?\d[\d.]*\s+)?changelog\b/i.test(line) ||
+    /^[^:]{1,40}:\s*\[[^\]]*\]\([^)]*\)\s*$/.test(line) || // "What changed: [CHANGELOG.md](...)", a pointer only
+    (line.length <= 40 && /:$/.test(line)) // a label such as "Future plans:"; what follows it is the content
+  );
+}
+
+/**
+ * When the opening says nothing, the first line further down that does: a sentence after an image or a
+ * download line ("First release."), or the first point of a list.
+ */
+function firstRealLine(body: string): string {
+  for (const raw of body.split('\n')) {
+    const line = raw.trim();
+    if (!line || isPreamble(line)) continue;
+    const point = line.match(/^(?:[-*]|\d+\.)\s+(.*)$/);
+    const text = plainText(point ? point[1] : line);
+    const sentence = text.match(/^.+?[.!?](?=\s|$)/)?.[0] ?? text;
+    // A list point reads as a label, so it loses its full stop; a sentence keeps it.
+    return clip(point ? sentence.replace(/[.!?]$/, '') : sentence, 120);
+  }
+  return '';
 }
 
 export interface FeedItem {
@@ -236,4 +267,14 @@ export function barWidths(before: number, after: number): { before: number; afte
 export function ratioPercent(before: number, after: number): number {
   if (before <= 0) return 100;
   return Math.min(100, Math.max(1, Math.round((after / before) * 100)));
+}
+
+/** True when a figure moved the wrong way. Every figure on the site so far is smaller-is-better. */
+export function isWorse(before: number, after: number, better: 'lower' | 'higher' = 'lower'): boolean {
+  return better === 'lower' ? after > before : after < before;
+}
+
+/** The change from before to after as a whole percentage, signed: 392.7 to 421.4 is 7. */
+export function changePercent(before: number, after: number): number {
+  return before === 0 ? 0 : Math.round((after / before - 1) * 100);
 }

@@ -1,5 +1,5 @@
 ---
-import { barWidths } from '../lib/data.ts';
+import { barWidths, changePercent, isWorse } from '../lib/data.ts';
 
 interface Value {
   value: number;
@@ -14,13 +14,29 @@ interface Props {
   after: Value;
   conditions: string;
   source: { label: string; url: string };
+  /** Which way is an improvement. Every figure on the site so far is smaller-is-better. */
+  better?: 'lower' | 'higher';
 }
-const { label, product, before, after, conditions, source } = Astro.props;
+const { label, product, before, after, conditions, source, better = 'lower' } = Astro.props;
 const widths = before ? barWidths(before.value, after.value) : null;
+// A figure that got worse keeps its bars to scale, but its "after" is not drawn in green:
+// green would read as an improvement. The change is spelled out instead.
+const worse = !!before && isWorse(before.value, after.value, better);
+const change = before && worse ? changePercent(before.value, after.value) : 0;
 ---
 
 <div class="measure">
-  <p class="measure-label mono">{product ? `${product}: ${label}` : label}</p>
+  <p class="measure-label mono">
+    {product ? `${product}: ${label}` : label}
+    {
+      worse && (
+        <span class="measure-change">
+          {change > 0 ? '+' : ''}
+          {change}%<span class="sr-only">, a change for the worse</span>
+        </span>
+      )
+    }
+  </p>
 
   {
     before ? (
@@ -28,18 +44,18 @@ const widths = before ? barWidths(before.value, after.value) : null;
         <p class="measure-values">
           <span class="measure-before display">{before.text}</span>
           <span class="measure-to mono">to</span>
-          <span class="measure-after display">{after.text}</span>
+          <span class:list={['measure-after display', { worse }]}>{after.text}</span>
         </p>
         <div class="bars" aria-hidden="true">
           <div class="bar bar-before" style={`width:${widths!.before}%`} />
-          <div class="bar bar-after" style={`width:${widths!.after}%`} />
+          <div class:list={['bar bar-after', { worse }]} style={`width:${widths!.after}%`} />
         </div>
         <p class="measure-notes mono">
           <span>
             {before.note} {before.ref && <b class="ref-before">{before.ref}</b>}
           </span>
           <span>
-            {after.note} {after.ref && <b class="ref-after">{after.ref}</b>}
+            {after.note} {after.ref && <b class:list={['ref-after', { worse }]}>{after.ref}</b>}
           </span>
         </p>
       </>
@@ -79,5 +95,18 @@ const widths = before ? barWidths(before.value, after.value) : null;
   }
   .ref-after {
     color: var(--green);
+  }
+  .measure-after.worse,
+  .ref-after.worse {
+    color: var(--paper);
+  }
+  .bar-after.worse {
+    background: var(--paper);
+  }
+  .measure-change {
+    margin-left: 0.6rem;
+    padding: 0.05rem 0.4rem;
+    border: 1px solid var(--line-strong);
+    color: var(--paper);
   }
 </style>

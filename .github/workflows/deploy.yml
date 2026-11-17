@@ -33,6 +33,9 @@ jobs:
         run: npm run snapshot
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Public oEmbed, no key. Keeps the stored copy if X does not answer.
+      - name: Refresh X posts
+        run: npm run posts
       - run: npm test
       - run: npm run build
       - uses: actions/upload-pages-artifact@v3
