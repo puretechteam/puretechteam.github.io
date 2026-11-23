@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.4.0 (2026-11-23)
+
+- Added: "What's in this app?" now counts lines of code. Drop a project's source folder, or an Electron app
+  (it reads the code packed inside `app.asar`), and it shows the lines that are not blank by language, how much
+  of it is bundled libraries such as `node_modules`, and how many files are minified. On this site's own source
+  it counts 6,210 lines in 54 files, the same as `grep` finds. A compiled program has no source to count, and
+  the box says so. As before, everything is read on your PC and the page makes 0 requests while it works.
+- Changed: the home page now loads "What's in this app?" the first time it is used, from a 3 KB starter.
+  The home page loads 144.3 KB (146.6 KB before) with 4.6 KB of script (9.5 KB before), in 6 requests (5
+  before: the starter is its own file) with 0 third-party. Phones never load the tool.
+- Changed: the site is built with the current versions of GitHub's own actions (checkout 7, setup-node 7,
+  upload-pages-artifact 5, deploy-pages 5). The old ones still targeted Node.js 20, and every daily build
+  warned that GitHub had deprecated it.
+
 ## 0.3.0 (2026-11-17)
 
 - Added: "What's in this app?" at the top of the home page, with its own "Look inside an app" button beside

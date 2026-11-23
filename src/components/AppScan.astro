@@ -1,7 +1,8 @@
 ---
 // "What's in this app?": drop a program's folder to see what it is made of, the program itself and what it carries
-// along. It all happens in the browser: the page reads file names and sizes, never contents, and sends nothing
-// anywhere. The sorting rules are in src/lib/appscan.ts.
+// along, and how many lines of code it holds. It all happens in the browser and nothing is sent anywhere. Sorting
+// uses file names and sizes only (src/lib/appscan.ts). The line count reads source files and the code packed in
+// app.asar (src/lib/loc.ts). The page loads a small starter; the tool (src/lib/scan-ui.ts) comes on first use.
 //
 // Chrome and Edge's folder picker (showDirectoryPicker) refuses Program Files and AppData, where programs live, so
 // the button uses the classic folder input instead. Dragging a folder works anywhere.
@@ -19,9 +20,10 @@ const { scale } = Astro.props;
       <p class="scan-phone muted">On a PC, drop a program's folder here to see what is inside it.</p>
       <p class="scan-text">
         Some programs bring a whole web browser along, plus runtimes and dozens of languages. Drag a program's folder
-        onto this page to see how much of it is the program and how much is extra.
+        onto this page to see how much of it is the program, how much is extra, and how many lines of code it holds.
+        A project's source folder works too.
       </p>
-      <p class="mono muted scan-promise">Nothing is uploaded. This page reads file names and sizes on your PC.</p>
+      <p class="mono muted scan-promise">Nothing is uploaded. Your files are read in this page, on your PC.</p>
     </div>
     <div class="scan-drop cut-outline">
       <div>
@@ -39,6 +41,7 @@ const { scale } = Astro.props;
       <p class="mono muted scan-note">
         <span data-note></span>Sorted by file name; open a line to see its files.{scale && ` For scale: ${scale}`}
       </p>
+      <div class="scan-loc" data-loc></div>
       <div class="scan-actions">
         <button type="button" class="btn btn-primary cut" data-copy>Copy result</button>
         <button type="button" class="btn btn-quiet" data-again>Try another</button>
@@ -61,126 +64,30 @@ const { scale } = Astro.props;
 </section>
 
 <script>
-  import { classify, filesCount, percent, resultText, type ScanFile } from '../lib/appscan.ts';
-  import { formatBytes } from '../lib/data.ts';
-
-  type Add = (file: ScanFile) => boolean;
-  const MAX = 100_000;
-  const SHOWN = 50;
+  // A small starter: it takes drops and button presses and fetches the tool itself (src/lib/scan-ui.ts) from this
+  // site the first time a file is dragged over the page or a button is pointed at, so the page stays light.
+  type Ui = ReturnType<typeof import('../lib/scan-ui.ts').init>;
 
   const box = document.querySelector<HTMLElement>('[data-scan]');
-  if (box && !document.documentElement.classList.contains('is-phone')) init(box);
+  if (box && !document.documentElement.classList.contains('is-phone')) {
+    const input = box.querySelector<HTMLInputElement>('[data-input]')!;
+    let ui: Promise<Ui> | undefined;
+    const load = () =>
+      (ui ??= import('../lib/scan-ui.ts')
+        .then((m) => m.init(box))
+        .catch((err) => {
+          ui = undefined;
+          box.querySelector('[data-status]')!.textContent = 'The tool could not be loaded. Check the connection and try again.';
+          throw err;
+        }));
 
-  function init(box: HTMLElement) {
-    const q = <T extends HTMLElement = HTMLElement>(s: string) => box.querySelector(s) as T;
-    const input = q<HTMLInputElement>('[data-input]');
-    const pick = q('[data-pick]');
-    const status = q('[data-status]');
-    const result = q('[data-result]');
-    const row = q<HTMLTemplateElement>('[data-row]');
-    let text = '';
-    let busy = false;
-    let unread = 0;
-
-    const say = (s: string, quiet = false) => {
-      status.textContent = s;
-      status.classList.toggle('sr-only', quiet);
-    };
-
-    async function run(name: string, walk: (add: Add) => Promise<unknown>) {
-      if (busy) return;
-      busy = true;
-      unread = 0;
-      result.hidden = true;
-      box.scrollIntoView({ block: 'nearest' });
-      const files: ScanFile[] = [];
-      let full = false;
-      say('Reading...');
-      try {
-        await walk((f) => {
-          if (files.length >= MAX) {
-            full = true;
-            return false;
-          }
-          if (files.push(f) % 250 === 0) say(`Reading... ${filesCount(files.length)}`);
-          return true;
-        });
-        show(name, files, full);
-      } catch {
-        say('That folder could not be read.');
-      }
-      busy = false;
-    }
-
-    function show(name: string, files: ScanFile[], full: boolean) {
-      if (!files.length) return say('That folder has no files in it.');
-      const r = classify(name, files);
-      text = resultText(r);
-      const total = `${formatBytes(r.total)} in ${filesCount(r.count)}`;
-      q('[data-name]').textContent = r.name;
-      q('[data-total]').textContent = total;
-      q('[data-note]').textContent =
-        (r.engine === 'WebView2' ? 'It uses the WebView2 that comes with Windows, not a browser of its own. ' : '') +
-        (full ? `Stopped at ${filesCount(MAX)}. ` : '') +
-        (unread ? `${filesCount(unread)} could not be read. ` : '');
-      q('[data-groups]').replaceChildren(
-        ...r.groups.map((g) => {
-          const li = row.content.firstElementChild!.cloneNode(true) as HTMLElement;
-          const set = (s: string, t: string) => (li.querySelector(s)!.textContent = t);
-          li.dataset.id = g.id;
-          set('.scan-label', g.label);
-          set('.scan-size', formatBytes(g.bytes));
-          set('.scan-pct', percent(g.bytes, r.total));
-          li.querySelector<HTMLElement>('.scan-bar span')!.style.width = `${r.total ? (g.bytes / r.total) * 100 : 0}%`;
-          const list = li.querySelector('ol')!;
-          const line = (...parts: string[]) => {
-            const item = document.createElement('li');
-            for (const p of parts) item.append(Object.assign(document.createElement('span'), { textContent: p }));
-            list.append(item);
-          };
-          for (const f of g.files.slice(0, SHOWN)) line(f.path, formatBytes(f.size));
-          const rest = g.files.slice(SHOWN);
-          if (rest.length) line(`and ${rest.length.toLocaleString('en-US')} more`, formatBytes(rest.reduce((s, f) => s + f.size, 0)));
-          return li;
-        }),
-      );
-      say(`${r.name}: ${total}, sorted below.`, true);
-      result.hidden = false;
-    }
-
-    const single = (f: File) => {
-      result.hidden = true;
-      say(
-        /\.lnk$/i.test(f.name)
-          ? 'That is a shortcut. Right-click it, choose Open file location, and drag that folder here.'
-          : `${f.name}: ${formatBytes(f.size)}. Drop the whole folder to see what is inside.`,
-      );
-    };
-
-    // Dragged folders: the whole page takes the drop, so a near miss does not send the browser off to show the folder.
-    const entries = (reader: FileSystemDirectoryReader) =>
-      new Promise<FileSystemEntry[]>((ok, no) => reader.readEntries(ok, no));
-    const fileOf = (e: FileSystemEntry) =>
-      new Promise<File | null>((ok) => (e as FileSystemFileEntry).file(ok, () => (unread++, ok(null))));
-    async function walk(dir: FileSystemDirectoryEntry, base: string, add: Add): Promise<boolean> {
-      const reader = dir.createReader();
-      for (;;) {
-        const batch = await entries(reader);
-        if (!batch.length) return true;
-        const found = await Promise.all(batch.map((e) => (e.isFile ? fileOf(e) : null)));
-        for (const [i, e] of batch.entries()) {
-          const path = base + e.name;
-          if (e.isDirectory) {
-            if (!(await walk(e as FileSystemDirectoryEntry, `${path}/`, add))) return false;
-          } else if (found[i] && !add({ path, size: found[i]!.size })) return false;
-        }
-      }
-    }
+    // The whole page takes the drop, so a near miss does not send the browser off to show the folder.
     const isFiles = (e: DragEvent) => !!e.dataTransfer?.types.includes('Files');
     document.addEventListener('dragover', (e) => {
       if (!isFiles(e)) return;
       e.preventDefault();
       box.classList.add('over');
+      load().catch(() => {});
     });
     document.addEventListener('dragleave', (e) => {
       if (!e.relatedTarget) box.classList.remove('over');
@@ -189,51 +96,28 @@ const { scale } = Astro.props;
       if (!isFiles(e)) return;
       e.preventDefault();
       box.classList.remove('over');
+      // What was dropped can only be taken during the drop itself, so take it now and hand it over once loaded.
       const entry = e.dataTransfer!.items[0]?.webkitGetAsEntry();
-      if (entry?.isDirectory) run(entry.name, (add) => walk(entry as FileSystemDirectoryEntry, '', add));
-      else if (e.dataTransfer!.files[0]) single(e.dataTransfer!.files[0]);
+      const file = e.dataTransfer!.files[0];
+      load()
+        .then((u) => (entry?.isDirectory ? u.folder(entry as FileSystemDirectoryEntry) : file && u.file(file)))
+        .catch(() => {});
     });
 
-    // The button: a folder input, which lists every file with its path inside the chosen folder.
-    pick.addEventListener('click', () => input.click());
-    // The "Look inside an app" button in the opening screen goes straight to the folder dialog. Without
-    // JavaScript it stays a link to this box.
-    document.querySelector('[data-scan-open]')?.addEventListener('click', (e) => {
-      e.preventDefault();
-      input.click();
-    });
+    // "Choose a folder" in the box and "Look inside an app" in the opening screen open the folder dialog. Without
+    // JavaScript the second stays a link to this box.
+    for (const b of [box.querySelector('[data-pick]'), document.querySelector('[data-scan-open]')]) {
+      b?.addEventListener('pointerenter', () => load().catch(() => {}));
+      b?.addEventListener('focus', () => load().catch(() => {}));
+      b?.addEventListener('click', (e) => {
+        e.preventDefault();
+        input.click();
+      });
+    }
     input.addEventListener('change', () => {
       const list = [...(input.files ?? [])];
       input.value = '';
-      if (!list.length) return;
-      const name = list[0].webkitRelativePath.split('/')[0];
-      run(name, async (add) => {
-        for (const f of list) if (!add({ path: f.webkitRelativePath.slice(name.length + 1), size: f.size })) return;
-      });
-    });
-
-    q('[data-copy]').addEventListener('click', async (e) => {
-      const b = e.currentTarget as HTMLElement;
-      let done = false;
-      try {
-        await navigator.clipboard.writeText(text);
-        done = true;
-      } catch {
-        // Older and embedded browsers: copy from a hidden text box.
-        const t = Object.assign(document.createElement('textarea'), { value: text });
-        t.style.cssText = 'position:fixed;opacity:0';
-        document.body.append(t);
-        t.select();
-        done = document.execCommand('copy');
-        t.remove();
-      }
-      b.textContent = done ? 'Copied' : 'Could not copy';
-      setTimeout(() => (b.textContent = 'Copy result'), 2000);
-    });
-    q('[data-again]').addEventListener('click', () => {
-      result.hidden = true;
-      say('');
-      pick.focus();
+      if (list.length) load().then((u) => u.list(list)).catch(() => {});
     });
   }
 </script>
@@ -385,5 +269,14 @@ const { scale } = Astro.props;
   }
   .scan-files :global(span:last-child) {
     flex: none;
+  }
+  /* Lines of code: filled in by src/lib/loc.ts, which brings the rest of its styles with it. */
+  .scan-loc {
+    padding-top: 0.9rem;
+    border-top: 1px solid var(--line);
+    color: var(--mist);
+  }
+  .scan-loc:empty {
+    display: none;
   }
 </style>

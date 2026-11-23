@@ -8,6 +8,8 @@ export interface ScanFile {
   /** Relative to the folder that was dropped, with / between folders. */
   path: string;
   size: number;
+  /** The file itself, kept so the line counter (loc.ts) can read source files. Sorting never reads it. */
+  file?: Blob;
 }
 export type Engine = 'Electron' | 'CEF' | 'Chromium' | 'WebView2' | null;
 export interface Group {
@@ -28,6 +30,9 @@ export interface ScanResult {
 
 const LOCALE_DIR = /(^|\/)(locales?|translations|lang|languages|localization|l10n|i18n)\//;
 const CULTURE_DIR = /(^|\/)([a-z]{2}(?:-[a-z]{2,4})?)\/[^/]+\.resources\.dll$/;
+
+/** License texts and documentation, by name. Also kept out of the line count (loc.ts): an .html license is not code. */
+export const DOCS = /(^|\/)(licen[cs]e|copying|notice|credits|readme|third[^/]*part)[^/]*$|\.chm$|(^|\/)licen[cs]es?\//;
 
 // [id, label, pattern on the lowercased path, condition]. The first match wins; what matches nothing is the program.
 // Conditions: 'web' rules apply only when a bundled browser engine was found, 'qt' only when Qt itself is there
@@ -72,11 +77,7 @@ const RULES: [string, string, RegExp, Need?][] = [
     /(^|\/)(updater?|installer)\/|updat[^/]*\.exe$|(^|\/)(squirrel|setup)\.exe$|(^|\/)unins[^/]*\.(exe|dat|msg)$|crash[^/]*(report|handler)[^/]*$|(^|\/)(sentry[^/]*\.dll|breakpad[^/]*)$/,
   ],
   ['debug', 'Debug files', /\.(pdb|map)$/],
-  [
-    'licenses',
-    'Licenses and documentation',
-    /(^|\/)(licen[cs]e|copying|notice|credits|readme|third[^/]*part)[^/]*$|\.chm$|(^|\/)licen[cs]es?\//,
-  ],
+  ['licenses', 'Licenses and documentation', DOCS],
 ];
 
 const BROWSER = RULES.find((r) => r[0] === 'browser')!;
@@ -165,11 +166,12 @@ export function percent(part: number, total: number): string {
   return p > 99 && part < total ? '>99%' : `${Math.round(p)}%`;
 }
 
-/** The result as plain text, for the Copy button. */
-export function resultText(r: ScanResult): string {
+/** The result as plain text, for the Copy button. `extra` lines (the line count) go before the sign-off. */
+export function resultText(r: ScanResult, extra: string[] = []): string {
   const lines = [`${r.name}: ${formatBytes(r.total)} in ${filesCount(r.count)}`];
   for (const g of r.groups) lines.push(`${g.label}: ${formatBytes(g.bytes)} (${percent(g.bytes, r.total)})`);
   if (r.engine === 'WebView2') lines.push('Uses the WebView2 that comes with Windows; no browser of its own.');
+  lines.push(...extra);
   lines.push('Measured with puretechteam.github.io. Nothing was uploaded.');
   return lines.join('\n');
 }

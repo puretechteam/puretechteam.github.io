@@ -85,7 +85,8 @@ result into that page's footer. The build fails if:
 - any page has more than 10 KB of script,
 - any page makes a third-party request or touches `document.cookie`.
 
-A video counts its poster. The video file counts too unless it is set to load only when played.
+A video counts its poster. The video file counts too unless it is set to load only when played. In the same
+way, code a page fetches only when it is used (the "What's in this app?" tool) is not counted.
 
 ## Load-up screen
 
@@ -102,15 +103,26 @@ or press **Choose a folder** (or **Look inside an app** in the opening screen, w
 dialog; without JavaScript it is a link to the box). The box shows how much of the folder is the program itself and how much is
 extra: a bundled web browser (Electron, CEF or Chromium), runtimes (.NET, Java, Python, Qt, Visual C++),
 translations, video and audio codecs, updaters and crash reporters, debug files, and licenses. Each line opens
-to list its files. **Copy result** puts the numbers on the clipboard as plain text.
+to list its files. Below that it counts the lines of code in the folder. **Copy result** puts the numbers on the
+clipboard as plain text.
 
-- **Private by design:** the page reads file names and sizes only, never what is in a file, and makes no
-  request while it works.
+- **Private by design:** everything is read in the page, on the visitor's PC, and nothing is sent anywhere. The
+  page makes no request while it works. Sorting uses file names and sizes only; the line count reads source files.
 - **The rules:** `src/lib/appscan.ts`, one table of file-name patterns where the first match wins. Anything
   no rule matches counts as the program itself. Browser and Qt files count only when the engine or Qt itself is
   in the folder, so an app's own `styles` folder is not mistaken for Qt. The tests in `tests/appscan.test.ts`
   cover each kind of app. The rules were checked against four installed programs: Edge, Unity Hub, OBS Studio
   and Notepad++.
+- **Lines of code:** `src/lib/loc.ts` counts the lines that are not blank in each source file, by extension
+  (data and docs such as JSON, XML and Markdown are not code), including the code an Electron app packs into
+  `resources/app.asar`. It says how much of it is bundled libraries (`node_modules`, `vendor`, `site-packages`
+  and the like) and how many files are minified, whose line count says little. It skips `.git`, license texts,
+  and files that only share an extension with code (a `.ts` video segment, a Qt `.ts` translation). It stops
+  after reading 300 MB. A compiled program has no source to count, and the box says so. Tests:
+  `tests/loc.test.ts`.
+- **Loaded on first use:** the home page carries only a 3 KB starter. The tool itself (`src/lib/scan-ui.ts` with
+  the rules and the counter, 12.7 KB) comes from this site the first time a file is dragged over the page or a
+  button is pointed at. Phones never load it.
 - **The button** uses a folder input rather than the newer folder picker: Chrome and Edge's picker refuses
   everything in Program Files and AppData, which is where programs are installed. Chrome words the folder
   input's prompt as an upload, so the box says that nothing leaves the PC.
