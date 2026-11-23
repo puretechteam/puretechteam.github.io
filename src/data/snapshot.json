@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-11-15T10:38:19.152Z",
+  "fetchedAt": "2026-11-23T21:24:31.497Z",
   "repos": {
     "Latheport": {
       "description": "Convert, compress, edit or extract any file. Drop it in, pick a format, done. Was ConvertAll.",
@@ -428,7 +428,7 @@
       "url": "https://github.com/puretechteam/Locast",
       "language": "Rust",
       "license": "MIT",
-      "pushedAt": "2026-11-09T00:38:03Z",
+      "pushedAt": "2026-11-23T00:41:39Z",
       "releases": [],
       "tags": []
     },
@@ -775,6 +775,34 @@
     }
   },
   "pulls": [
+    {
+      "repo": "erkamyaman/rust-anything",
+      "number": 322,
+      "title": "docs(install): name the runtime versions doctor checks",
+      "url": "https://github.com/erkamyaman/rust-anything/pull/322",
+      "mergedAt": "2026-11-23T21:01:42Z"
+    },
+    {
+      "repo": "erkamyaman/rust-anything",
+      "number": 321,
+      "title": "docs(cli): say that app replay's timeout defaults to the one app record saved",
+      "url": "https://github.com/erkamyaman/rust-anything/pull/321",
+      "mergedAt": "2026-11-23T21:01:31Z"
+    },
+    {
+      "repo": "erkamyaman/rust-anything",
+      "number": 320,
+      "title": "fix(report): leave out the Risk guide when no unit has a risk",
+      "url": "https://github.com/erkamyaman/rust-anything/pull/320",
+      "mergedAt": "2026-11-23T21:01:21Z"
+    },
+    {
+      "repo": "erkamyaman/rust-anything",
+      "number": 304,
+      "title": "fix(card): never print a non-zero fallback rate as 0.0% or a partial one as 100.0%",
+      "url": "https://github.com/erkamyaman/rust-anything/pull/304",
+      "mergedAt": "2026-11-23T20:42:55Z"
+    },
     {
       "repo": "Ishannaik/agent-sweep",
       "number": 224,

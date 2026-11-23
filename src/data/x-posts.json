@@ -1,6 +1,38 @@
 {
-  "fetchedAt": "2026-11-16T13:33:33.117Z",
+  "fetchedAt": "2026-11-23T21:25:49.925Z",
   "posts": [
+    {
+      "id": "2124826384996659655",
+      "url": "https://x.com/puretechteam/status/2124826384996659655",
+      "postedAt": "2026-11-23T11:24:22.205Z",
+      "text": "Latheport 2.0 is in the works.\n\nFirst up: a video player built from scratch. Early numbers on 4K HEVC, against VLC 3.0.24, same PC:\n\n1.8x faster to open\n10.6x faster to jump to a frame\n3.3x less processor\n4.9x less memory\n\nMore to show when it's ready. https://github.com/puretechteam/Latheport",
+      "media": true,
+      "lang": "en"
+    },
+    {
+      "id": "2124821475676869070",
+      "url": "https://x.com/puretechteam/status/2124821475676869070",
+      "postedAt": "2026-11-23T11:04:51.732Z",
+      "text": "What's in this app? now counts lines of code.\n\nDrop a project's folder on https://puretechteam.github.io/: lines per language, how much is bundled libraries, even the code packed inside Electron apps.\n\nOur own website: 6,210 lines.\n\nNothing is uploaded.",
+      "media": true,
+      "lang": "en"
+    },
+    {
+      "id": "2124802882373329207",
+      "url": "https://x.com/puretechteam/status/2124802882373329207",
+      "postedAt": "2026-11-23T09:50:58.743Z",
+      "text": "Remember the ??\n\nFarther. A free browser game about charting an unknown world outward from a single campfire.\n\nThe first edition is still being drawn.",
+      "media": true,
+      "lang": "en"
+    },
+    {
+      "id": "2122727958284562745",
+      "url": "https://x.com/puretechteam/status/2122727958284562745",
+      "postedAt": "2026-11-17T16:25:58.290Z",
+      "text": "New on our site: What's in this app?\n\nDrag any program's folder onto the page and see how much of it is the program and how much is extra.\n\nUnity Hub on our PC: 520 MB. 56% is a bundled web browser. 14% is the program itself.\n\nNothing is uploaded. https://puretechteam.github.io/",
+      "media": true,
+      "lang": "en"
+    },
     {
       "id": "2122321508978876551",
       "url": "https://x.com/puretechteam/status/2122321508978876551",

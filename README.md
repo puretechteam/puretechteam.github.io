@@ -61,8 +61,10 @@ Astro's usage telemetry is switched off for every command (see `scripts/astro.mj
   and emoji and the hashtags a post ends on are left out. A post deleted on X drops off at the next build;
   if X does not answer, the stored copy is kept. To show a new post, add the number at the end of its link
   to `src/data/x.mjs`.
-- **Games video:** `src/data/games.ts`. While it is empty the Games section shows the "??" block. A video
-  plays only when pressed (`preload="none"`), so the page carries just its poster image until then.
+- **Games:** `src/data/games.ts`. `game` holds what has been announced about the game (title, platform,
+  price, release), word for word; a fact that has not been announced is `null` and shows as "??".
+  `gamesVideo` is the video. While it is empty the Games section shows the "??" block. A video plays only
+  when pressed (`preload="none"`), so the page carries just its poster image until then.
 
 Set `GITHUB_TOKEN` when running `npm run snapshot` if you hit the anonymous rate limit. It is optional.
 

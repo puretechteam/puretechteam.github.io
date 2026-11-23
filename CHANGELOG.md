@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.1 (2026-11-23)
+
+- Changed: the Games section names the game. Farther is a free browser game about charting an unknown world
+  outward from a single campfire. Title, platform and price are filled in as announced on X; the release
+  date is still marked ??. The home page loads 144.4 KB (144.3 KB before), still in 6 requests.
+- Changed: Merged upstream lists 9 pull requests (5 before). The 4 new ones were merged into
+  erkamyaman/rust-anything on 2026-11-23.
+- Changed: the newest posts from X: Latheport 2.0 being in the works, lines of code in "What's in this
+  app?", and the game's name.
+
 ## 0.4.0 (2026-11-23)
 
 - Added: "What's in this app?" now counts lines of code. Drop a project's source folder, or an Electron app
