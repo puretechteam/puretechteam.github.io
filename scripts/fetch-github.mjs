@@ -58,10 +58,16 @@ for (const repo of ROSTER_REPOS) {
   console.log(`${repo}: ${releases.length} releases, ${tags.length} tags`);
 }
 
-const search = await get(
-  `/search/issues?q=${encodeURIComponent(`author:${OWNER} type:pr is:merged`)}&per_page=100`,
-);
-const pulls = search.items.map((i) => ({
+// Search returns 100 a page and at most 1,000 in all, so read pages until one comes back short.
+const items = [];
+for (let page = 1; page <= 10; page++) {
+  const search = await get(
+    `/search/issues?q=${encodeURIComponent(`author:${OWNER} type:pr is:merged`)}&per_page=100&page=${page}`,
+  );
+  items.push(...search.items);
+  if (search.items.length < 100 || items.length >= search.total_count) break;
+}
+const pulls = items.map((i) => ({
   repo: i.repository_url.replace(`${API}/repos/`, ''),
   number: i.number,
   title: i.title,

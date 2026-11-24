@@ -20,6 +20,8 @@ import {
   releaseHeadline,
   releaseSummary,
   sha256Of,
+  mergedWithin,
+  upstreamProjects,
   upstreamPulls,
   versionFromTag,
 } from '../src/lib/data.ts';
@@ -242,6 +244,50 @@ test('the download figure follows the latest release', () => {
   assert.equal(live.ref, versionFromTag(release.tag));
   assert.ok(measures.some((m) => m.id === 'download'));
   assert.equal(liveDownload(undefined), null);
+});
+
+test('upstreamProjects groups by project, most merged first, ties to the newer merge', () => {
+  const pulls = [
+    { repo: 'a/one', number: 1, title: 't', url: 'u', mergedAt: '2026-09-01T00:00:00Z' },
+    { repo: 'b/Two.rs', number: 2, title: 't', url: 'u', mergedAt: '2026-11-01T00:00:00Z' },
+    { repo: 'a/one', number: 3, title: 't', url: 'u', mergedAt: '2026-10-01T00:00:00Z' },
+    { repo: 'c/three', number: 4, title: 't', url: 'u', mergedAt: '2026-10-15T00:00:00Z' },
+    { repo: 'c/three', number: 5, title: 'open', url: 'u', mergedAt: null },
+  ];
+  const projects = upstreamProjects(pulls, 'puretechteam');
+  assert.deepEqual(
+    projects.map((p) => [p.repo, p.pulls.map((x) => x.number)]),
+    [
+      ['a/one', [3, 1]],
+      ['b/Two.rs', [2]],
+      ['c/three', [4]],
+    ],
+  );
+  assert.equal(projects[0].latest, '2026-10-01T00:00:00Z');
+  assert.equal(projects[1].id, 'b-two-rs');
+  assert.equal(projects[1].url, 'https://github.com/b/Two.rs');
+  assert.equal(projects[1].mergedUrl, 'https://github.com/b/Two.rs/pulls?q=is%3Apr%20is%3Amerged%20author%3Apuretechteam');
+  assert.deepEqual(upstreamProjects([], 'puretechteam'), []);
+});
+
+test('mergedWithin counts merges in the days up to the fetch time only', () => {
+  const at = (mergedAt: string | null) => ({ repo: 'a/b', number: 1, title: 't', url: 'u', mergedAt });
+  const pulls = [
+    at('2026-11-24T10:00:00Z'), // inside
+    at('2026-11-17T12:00:01Z'), // inside, just
+    at('2026-11-17T12:00:00Z'), // exactly 7 days before: outside
+    at('2026-11-25T00:00:00Z'), // after the fetch: outside
+    at(null),
+  ];
+  assert.equal(mergedWithin(pulls, 7, '2026-11-24T12:00:00Z'), 2);
+  assert.equal(mergedWithin([], 7, '2026-11-24T12:00:00Z'), 0);
+});
+
+test('every upstream pull request in the snapshot lands in exactly one project', () => {
+  const pulls = upstreamPulls(snapshot.pulls, OWNER);
+  const projects = upstreamProjects(pulls, OWNER);
+  assert.equal(projects.reduce((n, p) => n + p.pulls.length, 0), pulls.length);
+  assert.equal(new Set(projects.map((p) => p.id)).size, projects.length);
 });
 
 test('upstream pull requests in the snapshot are all merged elsewhere', () => {

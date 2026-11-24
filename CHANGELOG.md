@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.5.0 (2026-11-24)
+
+- Changed: merged upstream pull requests are shown by project instead of one long list, so the pages grow with
+  the number of projects, not the number of pull requests. The Upstream page opens with the totals (20 merged,
+  6 projects, 15 in the last 7 days), then one row per project with a bar to scale; open a row to see its pull
+  requests, or follow a link such as `/upstream/#mozilla-sccache`. The 5 newest are listed below. With 20 merged,
+  the page is 1,647 px tall at 1,024 px wide (2,110 px before) and 2,173 px on a phone (3,348 px before).
+- Changed: the home page's Merged upstream section gives the totals and the 4 projects with the most merges, each
+  linking to its place on the Upstream page, instead of the 3 newest pull requests. Home page: 144.8 KB (144.4 KB
+  before), still 6 requests with 0 third-party.
+- Changed: the site now picks up every merged pull request, not just the first 100 (up to GitHub's search limit of
+  1,000).
+- Changed: Merged upstream lists 20 pull requests (9 before): 9 more in erkamyaman/rust-anything and 2 in
+  mozilla/sccache, merged on 2026-11-24.
+
 ## 0.4.1 (2026-11-23)
 
 - Changed: the Games section names the game. Farther is a free browser game about charting an unknown world

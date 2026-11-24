@@ -1,0 +1,63 @@
+---
+// One row per project we have merged pull requests into, with a bar to scale.
+// "full" (the upstream page) opens each row to its pull requests; "summary" (the home page)
+// links each row to that place on the upstream page. Styles live in global.css, so the home
+// page's own styles stay under the inline limit.
+import type { UpstreamProject } from '../lib/data.ts';
+import { formatDate } from '../lib/data.ts';
+
+interface Props {
+  projects: UpstreamProject[];
+  mode: 'full' | 'summary';
+  limit?: number;
+}
+const { projects, mode, limit } = Astro.props;
+const shown = limit ? projects.slice(0, limit) : projects;
+const most = Math.max(1, ...projects.map((p) => p.pulls.length));
+const width = (p: UpstreamProject) => `width:${Math.max(2, Math.round((p.pulls.length / most) * 100))}%`;
+const merged = (p: UpstreamProject) => `${p.pulls.length} merged`;
+---
+
+<ul class="plain-list up-projects">
+  {
+    shown.map((p) =>
+      mode === 'full' ? (
+        <li>
+          <details class="up-project" id={p.id}>
+            <summary class="up-row">
+              <span class="mono up-repo">
+                {p.repo.split('/')[0]}/<b>{p.repo.split('/')[1]}</b>
+              </span>
+              <span class="up-bar" style={width(p)} aria-hidden="true" />
+              <span class="mono up-count">{merged(p)}</span>
+              <span class="mono muted up-date">latest {formatDate(p.latest)}</span>
+            </summary>
+            <ul class="up-pulls">
+              {p.pulls.map((pr) => (
+                <li>
+                  <span class="mono muted">#{pr.number}</span>
+                  <a href={pr.url}>{pr.title}</a>
+                  <span class="mono muted">{formatDate(pr.mergedAt as string)}</span>
+                </li>
+              ))}
+            </ul>
+            <p class="mono up-more">
+              <a class="link" href={p.url}>{p.repo}</a> · <a class="link" href={p.mergedUrl}>these pull requests on GitHub</a>
+            </p>
+          </details>
+        </li>
+      ) : (
+        <li>
+          <a class="up-row" href={`/upstream/#${p.id}`}>
+            <span class="mono up-repo">
+              {p.repo.split('/')[0]}/<b>{p.repo.split('/')[1]}</b>
+            </span>
+            <span class="up-bar" style={width(p)} aria-hidden="true" />
+            <span class="mono up-count">{merged(p)}</span>
+            <span class="mono muted up-date">latest {formatDate(p.latest)}</span>
+          </a>
+        </li>
+      ),
+    )
+  }
+</ul>

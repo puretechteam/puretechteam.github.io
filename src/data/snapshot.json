@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-11-23T21:24:31.497Z",
+  "fetchedAt": "2026-11-24T23:26:06.889Z",
   "repos": {
     "Latheport": {
       "description": "Convert, compress, edit or extract any file. Drop it in, pick a format, done. Was ConvertAll.",
@@ -775,6 +775,83 @@
     }
   },
   "pulls": [
+    {
+      "repo": "erkamyaman/rust-anything",
+      "number": 420,
+      "title": "fix(app): remove the cases a re-recording no longer writes",
+      "url": "https://github.com/erkamyaman/rust-anything/pull/420",
+      "mergedAt": "2026-11-24T18:38:37Z"
+    },
+    {
+      "repo": "erkamyaman/rust-anything",
+      "number": 419,
+      "title": "fix(http): stop the whole server when a wrapper started it",
+      "url": "https://github.com/erkamyaman/rust-anything/pull/419",
+      "mergedAt": "2026-11-24T18:37:29Z"
+    },
+    {
+      "repo": "erkamyaman/rust-anything",
+      "number": 418,
+      "title": "fix(harness): pass --experimental-strip-types to Node 22.6 to 22.17",
+      "url": "https://github.com/erkamyaman/rust-anything/pull/418",
+      "mergedAt": "2026-11-24T18:33:47Z"
+    },
+    {
+      "repo": "erkamyaman/rust-anything",
+      "number": 417,
+      "title": "fix(http): find a server that listens only on ::1",
+      "url": "https://github.com/erkamyaman/rust-anything/pull/417",
+      "mergedAt": "2026-11-24T18:33:03Z"
+    },
+    {
+      "repo": "erkamyaman/rust-anything",
+      "number": 416,
+      "title": "fix(app): run --db-reset and --db-dump in the case's folder",
+      "url": "https://github.com/erkamyaman/rust-anything/pull/416",
+      "mergedAt": "2026-11-24T18:32:15Z"
+    },
+    {
+      "repo": "erkamyaman/rust-anything",
+      "number": 385,
+      "title": "fix(analyze): refuse a --lang the folder does not hold",
+      "url": "https://github.com/erkamyaman/rust-anything/pull/385",
+      "mergedAt": "2026-11-24T04:55:48Z"
+    },
+    {
+      "repo": "erkamyaman/rust-anything",
+      "number": 384,
+      "title": "fix(app): join example commands wrapped with a trailing backslash",
+      "url": "https://github.com/erkamyaman/rust-anything/pull/384",
+      "mergedAt": "2026-11-24T04:55:11Z"
+    },
+    {
+      "repo": "mozilla/sccache",
+      "number": 3063,
+      "title": "docs: list the S3 permissions sccache needs",
+      "url": "https://github.com/mozilla/sccache/pull/3063",
+      "mergedAt": "2026-11-24T19:27:28Z"
+    },
+    {
+      "repo": "mozilla/sccache",
+      "number": 3062,
+      "title": "clang: cache compiles that pass -fopenmp through -Xclang",
+      "url": "https://github.com/mozilla/sccache/pull/3062",
+      "mergedAt": "2026-11-24T19:26:20Z"
+    },
+    {
+      "repo": "erkamyaman/rust-anything",
+      "number": 383,
+      "title": "fix(map): refuse --write together with --json",
+      "url": "https://github.com/erkamyaman/rust-anything/pull/383",
+      "mergedAt": "2026-11-24T04:51:03Z"
+    },
+    {
+      "repo": "erkamyaman/rust-anything",
+      "number": 382,
+      "title": "fix(analyze): list distinct lines as a risk's samples",
+      "url": "https://github.com/erkamyaman/rust-anything/pull/382",
+      "mergedAt": "2026-11-24T04:50:23Z"
+    },
     {
       "repo": "erkamyaman/rust-anything",
       "number": 322,

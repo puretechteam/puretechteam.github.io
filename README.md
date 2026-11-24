@@ -10,11 +10,11 @@ the public GitHub releases, and every measured figure links to the README or rel
 
 | Route | What it is |
 |---|---|
-| `/` | Home: "What's in this app?", what Latheport no longer needs, the software list, a games teaser, measured numbers, libraries, merged upstream pull requests, and "Lately": the newest releases beside the newest posts on X |
+| `/` | Home: "What's in this app?", what Latheport no longer needs, the software list, a games teaser, measured numbers, libraries, merged upstream pull requests counted by project, and "Lately": the newest releases beside the newest posts on X |
 | `/software/` | Every current program with its version, download size and release date |
 | `/software/<name>/` | One page per program: download, checksum, what it does, what it needs, measurements, limits |
 | `/libraries/` | The open-source libraries, with install lines |
-| `/upstream/` | Pull requests merged into projects Pure Tech does not own |
+| `/upstream/` | Pull requests merged into projects Pure Tech does not own: totals, one row per project that opens to its pull requests, and the 5 newest |
 | `/updates/` | Every release, newest first, with an RSS feed at `/updates.xml` |
 | `/about/` | How Pure Tech builds, where to find it, and how this site works |
 | `/sitemap.xml`, `/robots.txt` | For search engines |
@@ -50,7 +50,9 @@ Astro's usage telemetry is switched off for every command (see `scripts/astro.mj
 - **Words and measured figures:** `src/data/products.ts`, `src/data/pages.ts` and `src/data/libraries.ts`. Each figure
   carries the link it came from.
 - **Merged upstream:** pull requests by `puretechteam` that were merged into a repository Pure Tech does not
-  own. Open and unmerged ones never appear.
+  own. Open and unmerged ones never appear. They are grouped by project, so the home page and `/upstream/` grow
+  by one row per project, not per pull request; `/upstream/#owner-repo` (for example `#mozilla-sccache`) opens
+  that project's list. The snapshot reads up to 1,000 of them (GitHub search's limit), 100 a page.
 - **Preview cards:** `public/cards/<page>.png`, 1200 x 630, one for the home page and one per program page,
   made by `scripts/make-cards.mjs` from the names, taglines and facts in `src/data/products.ts`. They carry no
   version or date, so a new release never makes one stale. Visitors never load them; only sites a link is

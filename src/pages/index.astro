@@ -24,9 +24,12 @@ import {
   primaryAsset,
   releaseFeed,
   releaseSummary,
+  mergedWithin,
+  upstreamProjects,
   upstreamPulls,
   versionFromTag,
 } from '../lib/data.ts';
+import UpstreamProjects from '../components/UpstreamProjects.astro';
 
 const snapshot = snapshotJson as Snapshot;
 const latheport = snapshot.repos.Latheport;
@@ -49,7 +52,11 @@ const newest = updates[0]
       };
     })()
   : null;
-const upstreamShown = pulls.slice(0, 3);
+// Upstream is shown by project, so the section grows with projects, not pull requests.
+const projects = upstreamProjects(pulls, OWNER);
+const projectsShown = 4;
+const projectsLeft = Math.max(0, projects.length - projectsShown);
+const lastWeek = mergedWithin(pulls, 7, snapshot.fetchedAt);
 // For scale beside the app check: our smallest current download.
 const smallest = products
   .map((p) => {
@@ -138,19 +145,15 @@ const scale = smallest ? `${smallest.name} ${smallest.version} is a ${formatByte
   </Section>
 
   <Section num="05" title="Merged upstream" id="upstream">
-    <ul class="plain-list">
-      {
-        upstreamShown.map((p) => (
-          <li class="pull">
-            <span class="mono pull-repo">{p.repo}</span>
-            <a href={p.url}>{p.title}</a>
-            <span class="mono muted">{formatDate(p.mergedAt as string)}</span>
-          </li>
-        ))
-      }
-    </ul>
+    <p class="up-lede">
+      <b>{pulls.length}</b> pull requests merged into <b>{projects.length}</b> projects we do not own{
+        lastWeek > 0 && `, ${lastWeek} of them in the 7 days to ${formatDate(snapshot.fetchedAt)}`
+      }.
+    </p>
+    <UpstreamProjects projects={projects} mode="summary" limit={projectsShown} />
     <p class="mono muted list-note">
-      Pull requests merged into projects we do not own. <a class="link" href="/upstream/">All {pulls.length}</a>
+      {projectsLeft > 0 && `And ${projectsLeft} more ${projectsLeft === 1 ? 'project' : 'projects'}. `}
+      <a class="link" href="/upstream/">All {pulls.length}, by project</a>
     </p>
   </Section>
 
@@ -333,15 +336,11 @@ const scale = smallest ? `${smallest.name} ${smallest.version} is a ${formatByte
     }
   }
 
-  .pull,
   .update {
     display: grid;
-    grid-template-columns: minmax(0, 13rem) minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 6.5rem) minmax(0, 1fr);
     gap: 0.25rem 1.5rem;
     align-items: baseline;
-  }
-  .update {
-    grid-template-columns: minmax(0, 6.5rem) minmax(0, 1fr);
   }
   .update .update-line {
     grid-column: 2;
@@ -363,9 +362,6 @@ const scale = smallest ? `${smallest.name} ${smallest.version} is a ${formatByte
       grid-template-columns: minmax(0, 1fr);
     }
   }
-  .pull-repo {
-    color: var(--blue);
-  }
   .update-line {
     font-size: 0.9375rem;
     line-height: 1.45;
@@ -374,7 +370,6 @@ const scale = smallest ? `${smallest.name} ${smallest.version} is a ${formatByte
     margin-top: 1.25rem;
   }
   @media (max-width: 720px) {
-    .pull,
     .update {
       grid-template-columns: minmax(0, 1fr);
     }

@@ -126,6 +126,55 @@ export function upstreamPulls(pulls: Pull[], owner: string): Pull[] {
     .sort((a, b) => (b.mergedAt as string).localeCompare(a.mergedAt as string));
 }
 
+export interface UpstreamProject {
+  repo: string;
+  /** Anchor on the upstream page, such as "mozilla-sccache". */
+  id: string;
+  url: string;
+  /** Our merged pull requests in this project, on GitHub. */
+  mergedUrl: string;
+  /** Newest first. */
+  pulls: Pull[];
+  latest: string;
+}
+
+/**
+ * Merged pull requests grouped by project, so a page grows with the number of
+ * projects, not the number of pull requests. Most merged first; a tie goes to
+ * the project with the newer merge.
+ */
+export function upstreamProjects(pulls: Pull[], author: string): UpstreamProject[] {
+  const groups = new Map<string, Pull[]>();
+  for (const p of pulls) {
+    if (!p.mergedAt) continue;
+    groups.set(p.repo, [...(groups.get(p.repo) ?? []), p]);
+  }
+  return [...groups.entries()]
+    .map(([repo, list]) => {
+      const sorted = [...list].sort((a, b) => (b.mergedAt as string).localeCompare(a.mergedAt as string));
+      return {
+        repo,
+        id: repo.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        url: `https://github.com/${repo}`,
+        mergedUrl: `https://github.com/${repo}/pulls?q=${encodeURIComponent(`is:pr is:merged author:${author}`)}`,
+        pulls: sorted,
+        latest: sorted[0].mergedAt as string,
+      };
+    })
+    .sort((a, b) => b.pulls.length - a.pulls.length || b.latest.localeCompare(a.latest));
+}
+
+/** How many pull requests were merged in the `days` days up to `asOf` (the snapshot's fetch time). */
+export function mergedWithin(pulls: Pull[], days: number, asOf: string): number {
+  const end = new Date(asOf).getTime();
+  const start = end - days * 86_400_000;
+  return pulls.filter((p) => {
+    if (!p.mergedAt) return false;
+    const t = new Date(p.mergedAt).getTime();
+    return t > start && t <= end;
+  }).length;
+}
+
 /**
  * A short line for a release, taken from the first line of its notes:
  * a heading without its date, or an opening sentence. Lists, images and

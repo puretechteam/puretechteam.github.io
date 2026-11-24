@@ -1,13 +1,18 @@
 ---
 import Base from '../layouts/Base.astro';
 import PageHead from '../components/PageHead.astro';
+import Section from '../components/Section.astro';
+import UpstreamProjects from '../components/UpstreamProjects.astro';
 import snapshotJson from '../data/snapshot.json';
 import { OWNER } from '../data/roster.mjs';
 import type { Snapshot } from '../lib/data.ts';
-import { formatDate, upstreamPulls } from '../lib/data.ts';
+import { formatDate, mergedWithin, upstreamProjects, upstreamPulls } from '../lib/data.ts';
 
 const snapshot = snapshotJson as Snapshot;
 const pulls = upstreamPulls(snapshot.pulls, OWNER);
+const projects = upstreamProjects(pulls, OWNER);
+const lastWeek = mergedWithin(pulls, 7, snapshot.fetchedAt);
+const newest = pulls.slice(0, 5);
 ---
 
 <Base
@@ -16,48 +21,48 @@ const pulls = upstreamPulls(snapshot.pulls, OWNER);
 >
   <PageHead title="Upstream">
     Changes we sent to other people's open-source projects that their maintainers merged. Only merged pull requests are
-    listed. Open ones are not counted.
+    counted. Open ones are not.
   </PageHead>
 
-  <section class="section" aria-label="Merged pull requests">
-    <div class="wrap">
-      <ul class="plain-list">
-        {
-          pulls.map((p) => (
-            <li class="pull">
-              <span class="mono repo">{p.repo}</span>
-              <a href={p.url}>{p.title}</a>
-              <span class="mono muted">
-                #{p.number} · merged {formatDate(p.mergedAt as string)}
-              </span>
-            </li>
-          ))
-        }
-      </ul>
-      <p class="mono muted checked">
-        {pulls.length} merged. Checked against GitHub on {formatDate(snapshot.fetchedAt)}.
-      </p>
-    </div>
-  </section>
-</Base>
+  <div class="wrap up-stats">
+    <p><b class="display">{pulls.length}</b><span class="mono muted">merged</span></p>
+    <p><b class="display">{projects.length}</b><span class="mono muted">projects</span></p>
+    <p>
+      <b class="display">{lastWeek}</b><span class="mono muted">in the 7 days to {formatDate(snapshot.fetchedAt)}</span>
+    </p>
+  </div>
 
-<style>
-  .pull {
-    display: grid;
-    grid-template-columns: minmax(0, 15rem) minmax(0, 1fr) auto;
-    gap: 0.25rem 1.5rem;
-    align-items: baseline;
-    padding-block: 0.9rem;
-  }
-  .repo {
-    color: var(--blue);
-  }
-  .checked {
-    margin-top: 2rem;
-  }
-  @media (max-width: 860px) {
-    .pull {
-      grid-template-columns: minmax(0, 1fr);
-    }
-  }
-</style>
+  <Section num="01" title="By project" id="projects">
+    <UpstreamProjects projects={projects} mode="full" />
+    <p class="mono muted up-note">Open a project to see its pull requests.</p>
+  </Section>
+
+  <Section num="02" title="Newest" id="newest">
+    <ul class="plain-list">
+      {
+        newest.map((p) => (
+          <li class="pull">
+            <span class="mono pull-repo">{p.repo}</span>
+            <a href={p.url}>{p.title}</a>
+            <span class="mono muted">{formatDate(p.mergedAt as string)}</span>
+          </li>
+        ))
+      }
+    </ul>
+    <p class="mono muted up-note">
+      {pulls.length} merged in all. Checked against GitHub on {formatDate(snapshot.fetchedAt)}.
+    </p>
+  </Section>
+
+  <!-- A link to /upstream/#project opens that project's list. -->
+  <script is:inline>
+    (() => {
+      const open = () => {
+        const el = location.hash && document.getElementById(decodeURIComponent(location.hash.slice(1)));
+        if (el && el.tagName === 'DETAILS') el.open = true;
+      };
+      open();
+      addEventListener('hashchange', open);
+    })();
+  </script>
+</Base>
